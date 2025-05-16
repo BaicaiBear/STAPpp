@@ -1,6 +1,8 @@
 # stappp
 
-小熊白菜最可爱！
+小熊白菜并非可爱！
+
+This branch is held by Jzi.
 
 STAP++ is a C++ finite element method (FEM) code whose input/output data files are the same as STAP90. STAP90 is a FEM code in Fortran 90 provided by our textbook (Xiong Zhang, Tianshu Wang. Computational Dynamics, Tsinghau University Press, 2007; Xiong Zhang, Tianshu Wang, Yan Liu. Computational Dynamics (2nd edition), Tsinghau University Press, 2015)
 
