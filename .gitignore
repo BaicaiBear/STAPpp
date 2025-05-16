@@ -1,6 +1,10 @@
 .vscode/
 build/
 <<<<<<< HEAD
+<<<<<<< HEAD
 data/
 =======
 >>>>>>> ff0dacc (Modify CMakeLists)
+=======
+data/
+>>>>>>> 4eb2102 (add data/ to .gitignore)
