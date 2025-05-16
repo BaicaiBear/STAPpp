@@ -12,11 +12,14 @@
 #include "Bar.h"
 #include "Outputter.h"
 #include "Clock.h"
+#include <iostream>
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
+
+    cout << "Program Launch: STAP++" << endl;
 	if (argc != 2) //  Print help message
 	{
 	    cout << "Usage: stap++ InputFileName\n";
