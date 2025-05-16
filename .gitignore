@@ -1,3 +1,6 @@
 .vscode/
 build/
+<<<<<<< HEAD
 data/
+=======
+>>>>>>> ff0dacc (Modify CMakeLists)

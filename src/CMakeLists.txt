@@ -1,19 +1,20 @@
-PROJECT(stap++)
+cmake_minimum_required(VERSION 3.15)
+project(stap++ LANGUAGES CXX)
 
-cmake_minimum_required(VERSION 3.1)
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-OPTION(STAP++_DEBUG "Output detailed results for debugging." OFF)
-IF(STAP++_DEBUG)
-   ADD_DEFINITIONS(-D_DEBUG_)
-ENDIF()
+option(STAPPP_DEBUG "Output detailed results for debugging." OFF)
+if(STAPPP_DEBUG)
+    target_compile_definitions(stap++ PRIVATE _DEBUG_)
+endif()
 
-INCLUDE_DIRECTORIES(h)
+file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS h/*.h)
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS cpp/*.cpp)
 
-AUX_SOURCE_DIRECTORY(cpp SRC)
-FILE(GLOB_RECURSE HEAD h/*.h)
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/h" PREFIX "Header Files" FILES ${HEADER_FILES})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/cpp" PREFIX "Source Files" FILES ${SOURCE_FILES})
 
-source_group(SOURCE\ FILES FILES ${SRC})
-source_group(HEADER\ FILES FILES ${HEAD})
-
-ADD_EXECUTABLE(stap++ ${SRC} ${HEAD})
+add_executable(stap++ ${SOURCE_FILES} ${HEADER_FILES})
+target_include_directories(stap++ PRIVATE h)
