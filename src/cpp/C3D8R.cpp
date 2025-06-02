@@ -135,7 +135,78 @@ void CC3D8R::ElementStiffness(double* matrix)
 
 void CC3D8R::ElementStress(double* stress, double* Displacement)
 {
-	// TODO: Implement the actual stress calculation based on the displacement and material properties
-	CC3D8RMaterial* material_ = dynamic_cast<CC3D8RMaterial*>(ElementMaterial_); // Pointer to material of the element
-	cerr << "ElementStress not implemented yet for CC3D8R." << endl;
+    // Get material properties from the associated material object
+    CC3D8RMaterial* material_ = dynamic_cast<CC3D8RMaterial*>(ElementMaterial_);
+    double E = material_->E;     // Young's modulus
+    double nu = material_->nu;   // Poisson's ratio
+
+    // Construct the 6x6 constitutive matrix D for isotropic elasticity
+    Matrix<double, 6, 6> D;
+    double lambda = (E * nu) / ((1 + nu) * (1 - 2 * nu));  // Lamé's first parameter
+    double mu     = E / (2 * (1 + nu));                   // Shear modulus
+    D.setZero();
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            D(i, j) = lambda;
+    for (int i = 0; i < 3; ++i)
+        D(i, i) += 2 * mu;
+    D(3, 3) = mu;
+    D(4, 4) = mu;
+    D(5, 5) = mu;
+
+    // Collect nodal coordinates (8 nodes, 3 coordinates each)
+    Matrix<double, 8, 3> physicalCoords;
+    for (int i = 0; i < 8; ++i) {
+        physicalCoords(i, 0) = nodes_[i]->XYZ[0];
+        physicalCoords(i, 1) = nodes_[i]->XYZ[1];
+        physicalCoords(i, 2) = nodes_[i]->XYZ[2];
+    }
+
+    // Gradient of shape functions with respect to natural coordinates (ξ, η, ζ)
+    Matrix<double, 3, 8> shapeFunctionGradNat;
+    shapeFunctionGradNat <<
+        -0.125,  0.125,  0.125, -0.125, -0.125,  0.125,  0.125, -0.125,
+        -0.125, -0.125,  0.125,  0.125, -0.125, -0.125,  0.125,  0.125,
+        -0.125, -0.125, -0.125, -0.125,  0.125,  0.125,  0.125,  0.125;
+
+    // Compute the Jacobian matrix and its inverse
+    Matrix3d J = shapeFunctionGradNat * physicalCoords * (1.0 / 8.0);
+    Matrix3d Jinv = J.inverse();
+
+    // Transform gradient to physical coordinates (∂N/∂x, ∂N/∂y, ∂N/∂z)
+    Matrix<double, 3, 8> shapeFunctionGradXYZ = Jinv * shapeFunctionGradNat;
+
+    // Construct the 6x24 strain-displacement matrix B
+    Matrix<double, 6, 24> B;
+    B.setZero();
+    for (int i = 0; i < 8; ++i) {
+        int idx = i * 3;
+        double dN_dx = shapeFunctionGradXYZ(0, i);
+        double dN_dy = shapeFunctionGradXYZ(1, i);
+        double dN_dz = shapeFunctionGradXYZ(2, i);
+
+        B(0, idx)     = dN_dx;
+        B(1, idx + 1) = dN_dy;
+        B(2, idx + 2) = dN_dz;
+        B(3, idx)     = dN_dy;
+        B(3, idx + 1) = dN_dx;
+        B(4, idx + 1) = dN_dz;
+        B(4, idx + 2) = dN_dy;
+        B(5, idx)     = dN_dz;
+        B(5, idx + 2) = dN_dx;
+    }
+
+    // Assemble element displacement vector u_e from global displacement vector
+    Vector<double, 24> u_e;
+    for (int i = 0; i < 24; ++i) {
+        u_e(i) = (LocationMatrix_[i] ? Displacement[LocationMatrix_[i] - 1] : 0.0);
+    }
+
+    // Compute stress using σ = D * B * u_e
+    Vector<double, 6> sigma = D * (B * u_e);
+
+    // Store computed stress in output array
+    for (int i = 0; i < 6; ++i) {
+        stress[i] = sigma(i);
+    }
 }
