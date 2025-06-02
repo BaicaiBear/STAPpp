@@ -102,7 +102,7 @@ void CC3D8R::ElementStiffness(double* matrix)
 		physicalCoords(i, 2) = nodes_[i]->XYZ[2];  // z
 	}
 	//Jacobian J = naturalCoords * physicalCoords，3x3
-	Matrix3d J = shapeFunctionGradNat * physicalCoords * (1.0 / 8.0);  // 中心点的缩减积分权重
+	Matrix3d J = shapeFunctionGradNat * physicalCoords;  // 中心点的缩减积分权重
 	Matrix3d Jinv = J.inverse();
 
 	// Calculate the Gradient of the shape functions in physical coordinates
@@ -110,25 +110,68 @@ void CC3D8R::ElementStiffness(double* matrix)
 
 	// Calculate the B matrix
 	Matrix<double, 6, 24> B;
-	for (int i = 0; i < 8; ++i) {
-		int idx = i * 3;
-		B(0, idx)     = shapeFunctionGradXYZ(0, i);  // dN/dx
-		B(1, idx + 1) = shapeFunctionGradXYZ(1, i);  // dN/dy
-		B(2, idx + 2) = shapeFunctionGradXYZ(2, i);  // dN/dz
-		B(3, idx)     = shapeFunctionGradXYZ(1, i);  // dN/dy
-		B(3, idx + 1) = shapeFunctionGradXYZ(0, i);  // dN/dx
-		B(4, idx + 1) = shapeFunctionGradXYZ(2, i);  // dN/dz
-		B(4, idx + 2) = shapeFunctionGradXYZ(1, i);  // dN/dy
-		B(5, idx)     = shapeFunctionGradXYZ(2, i);  // dN/dz
-		B(5, idx + 2) = shapeFunctionGradXYZ(0, i);  // dN/dx
-	}
+    B.setZero();
+    for (int i = 0; i < 8; ++i) {
+        int idx = i * 3;
+        double dN_dx = shapeFunctionGradXYZ(0, i);
+        double dN_dy = shapeFunctionGradXYZ(1, i);
+        double dN_dz = shapeFunctionGradXYZ(2, i);
+
+        B(0, idx)     = dN_dx;
+        B(1, idx + 1) = dN_dy;
+        B(2, idx + 2) = dN_dz;
+        B(3, idx)     = dN_dy;
+        B(3, idx + 1) = dN_dx;
+        B(4, idx + 1) = dN_dz;
+        B(4, idx + 2) = dN_dy;
+        B(5, idx)     = dN_dz;
+        B(5, idx + 2) = dN_dx;
+    }
 	Matrix<double, 24, 24> Ke = B.transpose() * D * B * (J.determinant() * 8.0);  // 8.0 is the volume factor for the C3D8R element
+
+	const double alpha = 0.01;
+
+	const double gamma[4][8] = {
+    {-1, 1, 1, -1, -1, 1, 1, -1},   // γ1
+    {-1, -1, 1, 1, -1, -1, 1, 1},   // γ2
+    {-1, -1, -1, -1, 1, 1, 1, 1},   // γ3
+    { 1, -1, 1, -1, -1, 1, -1, 1}   // γ4
+	};
+
+	std::array<Matrix<double, 3, 8>, 4> B_hg_alpha;
+	for (int alpha = 0; alpha < 4; ++alpha) {
+		for (int i = 0; i < 8; ++i) {
+			B_hg_alpha[alpha](0, i) = gamma[alpha][i]; // x
+			B_hg_alpha[alpha](1, i) = gamma[alpha][i]; // y
+			B_hg_alpha[alpha](2, i) = gamma[alpha][i]; // z
+		}
+		// 映射到全局坐标
+		B_hg_alpha[alpha] = Jinv * B_hg_alpha[alpha];
+	}
+
+	Matrix<double, 24, 24> Khg = Matrix<double, 24, 24>::Zero();
+	double V = std::abs(J.determinant() * 8.0);
+	double l2 = std::pow(std::cbrt(V), 2);
+	double gh = mu * V / l2 * alpha;       
+
+	for (int alpha = 0; alpha < 4; ++alpha) {
+		Vector<double, 24> B_hg_vec;
+		B_hg_vec.setZero();
+		for (int i = 0; i < 8; ++i) {
+			int idx = i * 3;
+			B_hg_vec(idx)     = B_hg_alpha[alpha](0, i);
+			B_hg_vec(idx + 1) = B_hg_alpha[alpha](1, i);
+			B_hg_vec(idx + 2) = B_hg_alpha[alpha](2, i);
+		}
+		Khg += gh * B_hg_vec * B_hg_vec.transpose();  // rank-1 outer product
+	}
+	Matrix<double, 24, 24> Ke_total = Ke + Khg;
 
 	// Store the upper triangular part of the stiffness matrix in the provided array
 	int index = 0;
 	for (int j = 0; j < 24; ++j) {
 		for (int i = 0; i <= j; ++i) {
-			matrix[index++] = Ke(i, j);
+			matrix[index++] = Ke_total(i, j);
 		}
 	}
 }
@@ -170,7 +213,7 @@ void CC3D8R::ElementStress(double* stress, double* Displacement)
         -0.125, -0.125, -0.125, -0.125,  0.125,  0.125,  0.125,  0.125;
 
     // Compute the Jacobian matrix and its inverse
-    Matrix3d J = shapeFunctionGradNat * physicalCoords * (1.0 / 8.0);
+    Matrix3d J = shapeFunctionGradNat * physicalCoords;
     Matrix3d Jinv = J.inverse();
 
     // Transform gradient to physical coordinates (∂N/∂x, ∂N/∂y, ∂N/∂z)
