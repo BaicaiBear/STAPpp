@@ -55,6 +55,9 @@ public:
 
 //!	Output bar element data
 	void OutputBarElements(unsigned int EleGrp);
+	
+//!	Output C3D8R element data
+	void OutputC3D8RElements(unsigned int EleGrp);
 
 //!	Output load data 
 	void OutputLoadInfo(); 

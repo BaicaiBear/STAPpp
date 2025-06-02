@@ -129,48 +129,48 @@ void CC3D8R::ElementStiffness(double* matrix)
     }
 	Matrix<double, 24, 24> Ke = B.transpose() * D * B * (J.determinant() * 8.0);  // 8.0 is the volume factor for the C3D8R element
 
-	// const double alpha = 0.01;
+	const double alpha = 0.0001;
 
-	// const double gamma[4][8] = {
-    // {-1, 1, 1, -1, -1, 1, 1, -1},   // γ1
-    // {-1, -1, 1, 1, -1, -1, 1, 1},   // γ2
-    // {-1, -1, -1, -1, 1, 1, 1, 1},   // γ3
-    // { 1, -1, 1, -1, -1, 1, -1, 1}   // γ4
-	// };
+	const double gamma[4][8] = {
+    {-1, 1, 1, -1, -1, 1, 1, -1},   // γ1
+    {-1, -1, 1, 1, -1, -1, 1, 1},   // γ2
+    {-1, -1, -1, -1, 1, 1, 1, 1},   // γ3
+    { 1, -1, 1, -1, -1, 1, -1, 1}   // γ4
+	};
 
-	// std::array<Matrix<double, 3, 8>, 4> B_hg_alpha;
-	// for (int alpha = 0; alpha < 4; ++alpha) {
-	// 	for (int i = 0; i < 8; ++i) {
-	// 		B_hg_alpha[alpha](0, i) = gamma[alpha][i]; // x
-	// 		B_hg_alpha[alpha](1, i) = gamma[alpha][i]; // y
-	// 		B_hg_alpha[alpha](2, i) = gamma[alpha][i]; // z
-	// 	}
-	// 	// 映射到全局坐标
-	// 	B_hg_alpha[alpha] = Jinv * B_hg_alpha[alpha];
-	// }
+	std::array<Matrix<double, 3, 8>, 4> B_hg_alpha;
+	for (int alpha = 0; alpha < 4; ++alpha) {
+		for (int i = 0; i < 8; ++i) {
+			B_hg_alpha[alpha](0, i) = gamma[alpha][i]; // x
+			B_hg_alpha[alpha](1, i) = gamma[alpha][i]; // y
+			B_hg_alpha[alpha](2, i) = gamma[alpha][i]; // z
+		}
+		// 映射到全局坐标
+		B_hg_alpha[alpha] = Jinv * B_hg_alpha[alpha];
+	}
 
-	// Matrix<double, 24, 24> Khg = Matrix<double, 24, 24>::Zero();
-	// double V = std::abs(J.determinant() * 8.0);
-	// double l2 = std::pow(std::cbrt(V), 2);
-	// double gh = mu * V / l2 * alpha;       
+	Matrix<double, 24, 24> Khg = Matrix<double, 24, 24>::Zero();
+	double V = std::abs(J.determinant() * 8.0);
+	double l2 = std::pow(std::cbrt(V), 2);
+	double gh = mu * V / l2 * alpha;       
 
-	// for (int alpha = 0; alpha < 4; ++alpha) {
-	// 	Vector<double, 24> B_hg_vec;
-	// 	B_hg_vec.setZero();
-	// 	for (int i = 0; i < 8; ++i) {
-	// 		int idx = i * 3;
-	// 		B_hg_vec(idx)     = B_hg_alpha[alpha](0, i);
-	// 		B_hg_vec(idx + 1) = B_hg_alpha[alpha](1, i);
-	// 		B_hg_vec(idx + 2) = B_hg_alpha[alpha](2, i);
-	// 	}
-	// 	Khg += gh * B_hg_vec * B_hg_vec.transpose();  // rank-1 outer product
-	// }
-	// Ke += Khg;
+	for (int alpha = 0; alpha < 4; ++alpha) {
+		Vector<double, 24> B_hg_vec;
+		B_hg_vec.setZero();
+		for (int i = 0; i < 8; ++i) {
+			int idx = i * 3;
+			B_hg_vec(idx)     = B_hg_alpha[alpha](0, i);
+			B_hg_vec(idx + 1) = B_hg_alpha[alpha](1, i);
+			B_hg_vec(idx + 2) = B_hg_alpha[alpha](2, i);
+		}
+		Khg += gh * B_hg_vec * B_hg_vec.transpose();  // rank-1 outer product
+	}
+	Ke += Khg;
 
-	// Store the upper triangular part of the stiffness matrix in the provided array
+	// Upper triangular matrix, stored as an array column by colum starting from the diagonal element
 	int index = 0;
 	for (int j = 0; j < 24; ++j) {
-		for (int i = 0; i <= j; ++i) {
+		for (int i = j; i >= 0; --i) {
 			matrix[index++] = Ke(i, j);
 		}
 	}
