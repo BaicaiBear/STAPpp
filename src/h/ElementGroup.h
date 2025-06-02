@@ -14,6 +14,7 @@
 
 #include "Element.h"
 #include "Bar.h"
+#include "C3D8R.h"
 #include "Material.h"
 #include "Node.h"
 
@@ -29,7 +30,8 @@ enum ElementTypes
     H8,     // 8H element
     Beam,   // Beam element
     Plate,  // Plate element
-    Shell   // Shell elment
+    Shell,   // Shell elment
+    C3D8R,  // 8-node brick element with reduced integration
 };
 
 //! Element group class
