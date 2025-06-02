@@ -52,3 +52,14 @@ public:
 //!	Write material data to Stream
 	virtual void Write(COutputter& output);
 };
+
+// S4R壳单元材料类
+class CS4RMaterial : public CMaterial
+{
+public:
+    double nu;    // 泊松比
+    double thickness; // 单元厚度
+
+    virtual bool Read(ifstream& Input) override;
+    virtual void Write(COutputter& output) override;
+};

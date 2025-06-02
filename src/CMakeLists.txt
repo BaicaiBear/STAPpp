@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(STAPPP_DEBUG "Output detailed results for debugging." OFF)
+option(STAPPP_DEBUG "Output detailed results for debugging." ON)
 if(STAPPP_DEBUG)
-    target_compile_definitions(stap++ PRIVATE _DEBUG_)
+    add_definitions(-D_DEBUG_)
 endif()
 
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS h/*.h)
