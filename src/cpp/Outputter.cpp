@@ -9,6 +9,7 @@
 /*****************************************************************************/
 
 #include <ctime>
+#include <cmath>
 
 #include "Domain.h"
 #include "Outputter.h"
@@ -295,11 +296,39 @@ void COutputter::OutputElementStress()
 				}
 
 				*this << endl;
+				break;
 
+			case ElementTypes::C3D8R: // C3D8R element
+				*this << "  ELEMENT      SIGMA_X      SIGMA_Y      SIGMA_Z      TAU_XY      TAU_YZ      TAU_ZX     VON MISES" << endl
+					<< "  NUMBER" << endl;
+
+				double stresses[6];
+				for (unsigned int Ele = 0; Ele < NUME; Ele++)
+				{
+					CElement& Element = EleGrp[Ele];
+					Element.ElementStress(stresses, Displacement);
+
+					// Calculate von Mises stress
+					double s1 = stresses[0];
+					double s2 = stresses[1];
+					double s3 = stresses[2];
+					double tau12 = stresses[3];
+					double tau23 = stresses[4];
+					double tau31 = stresses[5];
+					double vonMises = sqrt(0.5 * ((s1-s2)*(s1-s2) + (s2-s3)*(s2-s3) + (s3-s1)*(s3-s1) + 
+									  6.0 * (tau12*tau12 + tau23*tau23 + tau31*tau31)));
+
+					*this << setw(5) << Ele + 1 
+						<< setw(12) << stresses[0] << setw(12) << stresses[1] << setw(12) << stresses[2]
+						<< setw(12) << stresses[3] << setw(12) << stresses[4] << setw(12) << stresses[5]
+						<< setw(12) << vonMises << endl;
+				}
+
+				*this << endl;
 				break;
 
 			default: // Invalid element type
-				cerr << "*** Error *** Elment type " << ElementType
+				cerr << "*** Error *** Element type " << ElementType
 					<< " has not been implemented.\n\n";
 		}
 	}
