@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(STAPPP_DEBUG "Output detailed results for debugging." ON)
+option(STAPPP_DEBUG "Output detailed results for debugging." OFF)
 if(STAPPP_DEBUG)
     add_definitions(-D_DEBUG_)
 endif()

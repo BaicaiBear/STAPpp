@@ -21,6 +21,7 @@ public:
     virtual void ElementStiffness(double* Matrix) override;
     // 计算单元应力
     virtual void ElementStress(double* stress, double* Displacement) override;
+    CNode* GetNode(unsigned int i) const;
 
 private:
     // hourglass 控制参数等可在此扩展

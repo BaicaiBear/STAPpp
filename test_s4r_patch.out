@@ -1,5 +1,5 @@
 TITLE : Patch_Test_S4R_irregular_5
-        (23:54:4 on June 2, 2025, Monday)
+        (19:16:20 on June 3, 2025, Tuesday)
 
 C O N T R O L   I N F O R M A T I O N
 
@@ -51,15 +51,6 @@ C O N T R O L   I N F O R M A T I O N
  NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ) . . =    1
 
 2 has not been implemented yet.
-   Ele =        Location Matrix
-        1    0    0    0    1    2    3    4    5    6    0    0    0
-
-*** _Debug_ *** Column Heights
-       0       1       2       3       4       5
-
-*** _Debug_ *** Address of Diagonal Element
-       1       2       4       7      11      16      22
-
 	TOTAL SYSTEM DATA
 
      NUMBER OF EQUATIONS . . . . . . . . . . . . . .(NEQ) = 6
@@ -68,57 +59,33 @@ C O N T R O L   I N F O R M A T I O N
      MEAN HALF BANDWIDTH . . . . . . . . . . . . . .(MM ) = 3
 
 
-*** _Debug_ *** Banded stiffness matrix
-   4.08883e+08   4.08883e+08  -2.97619e+06   3.20513e+07   8.01282e+07  -8.01282e+07
-   4.08883e+08  -8.01282e+07   2.28938e+05   4.01557e+08   4.08883e+08   2.97619e+06
-   8.01282e+07   3.95604e+08  -2.28938e+05   3.20513e+07  -8.01282e+07  -8.01282e+07
-  -1.44544e-10  -8.01282e+07  -8.01282e+07
-
-*** _Debug_ *** Full stiffness matrix
-   4.08883e+08  -2.97619e+06  -8.01282e+07   4.01557e+08  -2.28938e+05  -8.01282e+07
-  -2.97619e+06   4.08883e+08   8.01282e+07   2.28938e+05   3.95604e+08  -8.01282e+07
-  -8.01282e+07   8.01282e+07   3.20513e+07  -8.01282e+07   8.01282e+07  -1.44544e-10
-   4.01557e+08   2.28938e+05  -8.01282e+07   4.08883e+08   2.97619e+06  -8.01282e+07
-  -2.28938e+05   3.95604e+08   8.01282e+07   2.97619e+06   4.08883e+08  -8.01282e+07
-  -8.01282e+07  -8.01282e+07  -1.44544e-10  -8.01282e+07  -8.01282e+07   3.20513e+07
-
-*** _Debug_ *** Banded stiffness matrix
-   4.08883e+08   4.08861e+08  -7.27884e-03   8.72992e+05   1.94553e-01  -1.95969e-01
-   9.68791e+06  -2.34694e+00   7.70874e-03   9.82083e-01   9.21531e+06   7.70938e-01
-   3.57143e+00   9.67572e-01  -5.59910e-04   1.18767e+05  -1.57538e-01  -8.39690e-02
-  -1.29486e-15  -1.97406e-01  -1.95969e-01
-
-*** _Debug_ *** Full stiffness matrix
-   4.08883e+08  -7.27884e-03  -1.95969e-01   9.82083e-01  -5.59910e-04  -1.95969e-01
-  -7.27884e-03   4.08861e+08   1.94553e-01   7.70874e-03   9.67572e-01  -1.97406e-01
-  -1.95969e-01   1.94553e-01   8.72992e+05  -2.34694e+00   3.57143e+00  -1.29486e-15
-   9.82083e-01   7.70874e-03  -2.34694e+00   9.68791e+06   7.70938e-01  -8.39690e-02
-  -5.59910e-04   9.67572e-01   3.57143e+00   7.70938e-01   9.21531e+06  -1.57538e-01
-  -1.95969e-01  -1.97406e-01  -1.29486e-15  -8.39690e-02  -1.57538e-01   1.18767e+05
-
  LOAD CASE    1
 
-
-*** _Debug_ *** Displacement vector
-  -5.82132e-07  -1.20441e-07  -2.94186e-06  -5.82132e-07   1.20441e-07
-  -2.94186e-06
 
  D I S P L A C E M E N T S
 
   NODE           X-DISPLACEMENT    Y-DISPLACEMENT    Z-DISPLACEMENT
-    1               0.00000e+00       0.00000e+00       0.00000e+00
-    2              -5.82132e-07      -1.20441e-07      -2.94186e-06
-    3              -5.82132e-07       1.20441e-07      -2.94186e-06
-    4               0.00000e+00       0.00000e+00       0.00000e+00
+
+ D I S P L A C E M E N T S (S4R: theta_x, theta_y, w)
+
+  NODE         THETA_X(RAD)    THETA_Y(RAD)    W (OUT OF PLANE)
+     1       0.00000e+00       0.00000e+00       0.00000e+00
+     2      -5.82132e-07      -1.20441e-07      -2.94186e-06
+     3      -5.82132e-07       1.20441e-07      -2.94186e-06
+     4       0.00000e+00       0.00000e+00       0.00000e+00
 
  S T R E S S  C A L C U L A T I O N S  F O R  E L E M E N T  G R O U P    1
+
+  ELEMENT     Mx           My           Mxy          Qx           Qy
+  NUMBER
+    1 -1.00000e+00 -9.92647e-02  3.31853e-15 -2.00000e-01 -1.84061e-16
 
 
  S O L U T I O N   T I M E   L O G   I N   S E C 
 
-     TIME FOR INPUT PHASE = 6.38000e-04
-     TIME FOR CALCULATION OF STIFFNESS MATRIX = 1.46000e-04
-     TIME FOR FACTORIZATION AND LOAD CASE SOLUTIONS = 1.42000e-04
+     TIME FOR INPUT PHASE = 1.25000e-03
+     TIME FOR CALCULATION OF STIFFNESS MATRIX = 4.90000e-05
+     TIME FOR FACTORIZATION AND LOAD CASE SOLUTIONS = 8.90000e-05
 
-     T O T A L   S O L U T I O N   T I M E = 9.26000e-04
+     T O T A L   S O L U T I O N   T I M E = 1.38800e-03
 

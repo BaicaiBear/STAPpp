@@ -169,7 +169,7 @@ void CS4R::ElementStiffness(double* Matrix) {
 }
 
 void CS4R::ElementStress(double* stress, double* Displacement) {
-    // 只在单个高斯点计算应力
+    // 采用与刚度阵一致的积分方案：膜2x2高斯积分平均，剪切1点积分
     double x[4], y[4], z[4];
     for (int i = 0; i < 4; ++i) {
         x[i] = nodes_[i]->XYZ[0];
@@ -180,7 +180,65 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
     double t = mat->thickness;
     double E = mat->E;
     double nu = mat->nu;
-    double xi = 0.0, eta = 0.0;
+    // --- 膜应力（弯矩）部分，2x2高斯积分平均 ---
+    double gauss[2] = { -1.0/std::sqrt(3.0), 1.0/std::sqrt(3.0) };
+    double weight[2] = { 1.0, 1.0 };
+    double moment[3] = {0,0,0};
+    double total_weight = 0.0;
+    for (int gp_x = 0; gp_x < 2; ++gp_x) {
+        for (int gp_y = 0; gp_y < 2; ++gp_y) {
+            double xi = gauss[gp_x];
+            double eta = gauss[gp_y];
+            double w = weight[gp_x] * weight[gp_y];
+            double dN_dxi[4]  = {-(1-eta)/4, (1-eta)/4, (1+eta)/4, -(1+eta)/4};
+            double dN_deta[4] = {-(1-xi)/4, -(1+xi)/4, (1+xi)/4, (1-xi)/4};
+            double dx_dxi = 0, dx_deta = 0, dy_dxi = 0, dy_deta = 0;
+            for (int i = 0; i < 4; ++i) {
+                dx_dxi  += dN_dxi[i]  * x[i];
+                dx_deta += dN_deta[i] * x[i];
+                dy_dxi  += dN_dxi[i]  * y[i];
+                dy_deta += dN_deta[i] * y[i];
+            }
+            double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+            double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
+            double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
+            double Bb[3][12] = {0};
+            for (int i = 0; i < 4; ++i) {
+                double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
+                double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
+                Bb[0][i*3+0] = dN_dx;
+                Bb[1][i*3+1] = dN_dy;
+                Bb[2][i*3+0] = dN_dy;
+                Bb[2][i*3+1] = dN_dx;
+            }
+            double Db[3][3] = {
+                {1, nu, 0},
+                {nu, 1, 0},
+                {0, 0, (1-nu)/2}
+            };
+            double coeff = E*t*t*t/(12.0*(1-nu*nu));
+            for(int i=0;i<3;++i) for(int j=0;j<3;++j) Db[i][j]*=coeff;
+            double u[12];
+            for(int i=0;i<12;++i) {
+                if (LocationMatrix_[i] > 0)
+                    u[i] = Displacement[LocationMatrix_[i]-1];
+                else
+                    u[i] = 0.0;
+            }
+            double strain[3] = {0};
+            for(int m=0;m<3;++m) {
+                for(int i=0;i<12;++i) strain[m] += Bb[m][i]*u[i];
+            }
+            double m_out[3] = {0};
+            for(int m=0;m<3;++m) for(int n=0;n<3;++n) m_out[m] += Db[m][n]*strain[n];
+            for(int m=0;m<3;++m) moment[m] += m_out[m]*w;
+            total_weight += w;
+        }
+    }
+    for(int m=0;m<3;++m) moment[m] /= total_weight;
+    // --- 剪切力部分，1点积分 ---
+    double xi = 0.0, eta = 0.0, w = 4.0;
+    double N[4] = {(1-xi)*(1-eta)/4, (1+xi)*(1-eta)/4, (1+xi)*(1+eta)/4, (1-xi)*(1+eta)/4};
     double dN_dxi[4]  = {-(1-eta)/4, (1-eta)/4, (1+eta)/4, -(1+eta)/4};
     double dN_deta[4] = {-(1-xi)/4, -(1+xi)/4, (1+xi)/4, (1-xi)/4};
     double dx_dxi = 0, dx_deta = 0, dy_dxi = 0, dy_deta = 0;
@@ -193,29 +251,35 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
     double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
     double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
     double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
-    double Bb[3][12] = {0};
+    double Bs[2][12] = {0};
     for (int i = 0; i < 4; ++i) {
         double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
         double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
-        Bb[0][i*3+0] = dN_dx;
-        Bb[1][i*3+1] = dN_dy;
-        Bb[2][i*3+0] = dN_dy;
-        Bb[2][i*3+1] = dN_dx;
+        double Ni = N[i];
+        Bs[0][i*3+0] = -Ni;
+        Bs[1][i*3+1] = -Ni;
+        Bs[0][i*3+2] = dN_dx;
+        Bs[1][i*3+2] = dN_dy;
     }
-    double Db[3][3] = {
-        {1, nu, 0},
-        {nu, 1, 0},
-        {0, 0, (1-nu)/2}
-    };
-    double coeff = E*t*t*t/(12.0*(1-nu*nu));
-    for(int i=0;i<3;++i) for(int j=0;j<3;++j) Db[i][j]*=coeff;
+    double kappa = 5.0/6.0;
+    double G = E/(2*(1+nu));
+    double Ds[2][2] = { {kappa*G*t, 0}, {0, kappa*G*t} };
     double u[12];
-    for(int i=0;i<12;++i) u[i] = Displacement[LocationMatrix_[i]-1];
-    for(int m=0;m<3;++m) {
-        stress[m] = 0.0;
-        for(int i=0;i<12;++i) stress[m] += Bb[m][i]*u[i];
+    for(int i=0;i<12;++i) {
+        if (LocationMatrix_[i] > 0)
+            u[i] = Displacement[LocationMatrix_[i]-1];
+        else
+            u[i] = 0.0;
     }
-    double stress_out[3] = {0};
-    for(int m=0;m<3;++m) for(int n=0;n<3;++n) stress_out[m] += Db[m][n]*stress[n];
-    for(int m=0;m<3;++m) stress[m] = stress_out[m];
+    double gamma[2] = {0};
+    for(int m=0;m<2;++m) for(int i=0;i<12;++i) gamma[m] += Bs[m][i]*u[i];
+    double shear[2] = {0};
+    for(int m=0;m<2;++m) for(int n=0;n<2;++n) shear[m] += Ds[m][n]*gamma[n];
+    // --- 输出：前3项为弯矩，后2项为剪力 ---
+    for(int m=0;m<3;++m) stress[m] = moment[m];
+    for(int m=0;m<2;++m) stress[3+m] = shear[m];
+}
+
+CNode* CS4R::GetNode(unsigned int i) const {
+    return nodes_[i];
 }
