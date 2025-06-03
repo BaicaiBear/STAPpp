@@ -17,4 +17,4 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/h" PREFIX "Header Files" FILES ${
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/cpp" PREFIX "Source Files" FILES ${SOURCE_FILES})
 
 add_executable(stap++ ${SOURCE_FILES} ${HEADER_FILES})
-target_include_directories(stap++ PRIVATE h)
+target_include_directories(stap++ PRIVATE h ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/eigen-3.4.0)
