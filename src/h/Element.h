@@ -15,7 +15,12 @@
 
 using namespace std;
 
-template <class type> void clear( type* a, unsigned int N );	// Clear an array
+template <class type> 
+inline void clear(type* a, unsigned int N) {
+    for (unsigned int i = 0; i < N; ++i) {
+        a[i] = type(0);
+    }
+}
 
 //!	Element base class
 /*!	All type of element classes should be derived from this base class */
