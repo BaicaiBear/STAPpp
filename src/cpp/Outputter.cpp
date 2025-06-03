@@ -9,6 +9,8 @@
 /*****************************************************************************/
 
 #include <ctime>
+#include <set>
+#include "S4R.h"
 
 #include "Domain.h"
 #include "Outputter.h"
@@ -241,68 +243,116 @@ void COutputter::OutputLoadInfo()
 //	Print nodal displacement
 void COutputter::OutputNodalDisplacement()
 {
-	CDomain* FEMData = CDomain::GetInstance();
-	CNode* NodeList = FEMData->GetNodeList();
-	double* Displacement = FEMData->GetDisplacement();
+    CDomain* FEMData = CDomain::GetInstance();
+    CNode* NodeList = FEMData->GetNodeList();
+    double* Displacement = FEMData->GetDisplacement();
+    *this << setiosflags(ios::scientific);
 
-	*this << setiosflags(ios::scientific);
-
-	*this << " D I S P L A C E M E N T S" << endl
-		  << endl;
-	*this << "  NODE           X-DISPLACEMENT    Y-DISPLACEMENT    Z-DISPLACEMENT" << endl;
-
-	for (unsigned int np = 0; np < FEMData->GetNUMNP(); np++)
-		NodeList[np].WriteNodalDisplacement(*this, Displacement);
-
-	*this << endl;
+    std::set<unsigned int> s4r_nodes;
+    for (unsigned int eg = 0; eg < FEMData->GetNUMEG(); ++eg) {
+        if (FEMData->GetEleGrpList()[eg].GetElementType() == ElementTypes::S4R) {
+            CElementGroup& grp = FEMData->GetEleGrpList()[eg];
+            unsigned int NUME = grp.GetNUME();
+            for (unsigned int e = 0; e < NUME; ++e) {
+                CElement& ele = grp[e];
+                CS4R* s4r = dynamic_cast<CS4R*>(&ele);
+                if (s4r) {
+                    for (unsigned int ni = 0; ni < s4r->GetNEN(); ++ni) {
+                        CNode* pNode = s4r->GetNode(ni);
+                        s4r_nodes.insert(pNode->NodeNumber);
+                    }
+                }
+            }
+        }
+    }
+    *this << " D I S P L A C E M E N T S" << endl << endl;
+    *this << "  NODE           X-DISPLACEMENT    Y-DISPLACEMENT    Z-DISPLACEMENT" << endl;
+    for (unsigned int np = 0; np < FEMData->GetNUMNP(); np++) {
+        if (s4r_nodes.count(NodeList[np].NodeNumber) == 0) {
+            NodeList[np].WriteNodalDisplacement(*this, Displacement);
+        }
+    }
+    *this << endl;
+    if (!s4r_nodes.empty()) {
+        *this << " D I S P L A C E M E N T S (S4R: theta_x, theta_y, w)" << endl << endl;
+        *this << "  NODE         THETA_X(RAD)    THETA_Y(RAD)    W (OUT OF PLANE)" << endl;
+        for (unsigned int np = 0; np < FEMData->GetNUMNP(); np++) {
+            if (s4r_nodes.count(NodeList[np].NodeNumber) > 0) {
+                *this << setw(6) << NodeList[np].NodeNumber;
+                for (int d = 0; d < 3; ++d) {
+                    unsigned int eqn = NodeList[np].bcode[d];
+                    if (eqn)
+                        *this << setw(18) << Displacement[eqn - 1];
+                    else
+                        *this << setw(18) << 0.0;
+                }
+                *this << endl;
+            }
+        }
+        *this << endl;
+    }
 }
 
 //	Calculate stresses
 void COutputter::OutputElementStress()
 {
-	CDomain* FEMData = CDomain::GetInstance();
+    CDomain* FEMData = CDomain::GetInstance();
 
-	double* Displacement = FEMData->GetDisplacement();
+    double* Displacement = FEMData->GetDisplacement();
 
-	unsigned int NUMEG = FEMData->GetNUMEG();
+    unsigned int NUMEG = FEMData->GetNUMEG();
 
-	for (unsigned int EleGrpIndex = 0; EleGrpIndex < NUMEG; EleGrpIndex++)
-	{
-		*this << " S T R E S S  C A L C U L A T I O N S  F O R  E L E M E N T  G R O U P" << setw(5)
-			  << EleGrpIndex + 1 << endl
-			  << endl;
+    for (unsigned int EleGrpIndex = 0; EleGrpIndex < NUMEG; EleGrpIndex++)
+    {
+        *this << " S T R E S S  C A L C U L A T I O N S  F O R  E L E M E N T  G R O U P" << setw(5)
+              << EleGrpIndex + 1 << endl
+              << endl;
 
-		CElementGroup& EleGrp = FEMData->GetEleGrpList()[EleGrpIndex];
-		unsigned int NUME = EleGrp.GetNUME();
-		ElementTypes ElementType = EleGrp.GetElementType();
+        CElementGroup& EleGrp = FEMData->GetEleGrpList()[EleGrpIndex];
+        unsigned int NUME = EleGrp.GetNUME();
+        ElementTypes ElementType = EleGrp.GetElementType();
 
-		switch (ElementType)
-		{
-			case ElementTypes::Bar: // Bar element
-				*this << "  ELEMENT             FORCE            STRESS" << endl
-					<< "  NUMBER" << endl;
+        switch (ElementType)
+        {
+            case ElementTypes::Bar: // Bar element
+                *this << "  ELEMENT             FORCE            STRESS" << endl
+                    << "  NUMBER" << endl;
 
-				double stress;
+                double stress;
 
-				for (unsigned int Ele = 0; Ele < NUME; Ele++)
-				{
-					CElement& Element = EleGrp[Ele];
-					Element.ElementStress(&stress, Displacement);
+                for (unsigned int Ele = 0; Ele < NUME; Ele++)
+                {
+                    CElement& Element = EleGrp[Ele];
+                    Element.ElementStress(&stress, Displacement);
 
-					CBarMaterial& material = *dynamic_cast<CBarMaterial*>(Element.GetElementMaterial());
-					*this << setw(5) << Ele + 1 << setw(22) << stress * material.Area << setw(18)
-						<< stress << endl;
-				}
+                    CBarMaterial& material = *dynamic_cast<CBarMaterial*>(Element.GetElementMaterial());
+                    *this << setw(5) << Ele + 1 << setw(22) << stress * material.Area << setw(18)
+                        << stress << endl;
+                }
 
-				*this << endl;
+                *this << endl;
 
-				break;
-
-			default: // Invalid element type
-				cerr << "*** Error *** Elment type " << ElementType
-					<< " has not been implemented.\n\n";
-		}
-	}
+                break;
+            case ElementTypes::S4R:
+                *this << "  ELEMENT     Mx           My           Mxy          Qx           Qy" << endl;
+                *this << "  NUMBER" << endl;
+                for (unsigned int Ele = 0; Ele < NUME; Ele++) {
+                    CElement& Element = EleGrp[Ele];
+                    double stress[5];
+                    Element.ElementStress(stress, Displacement);
+                    *this << setw(5) << Ele + 1;
+                    for (int i = 0; i < 5; ++i) {
+                        *this << setw(13) << stress[i];
+                    }
+                    *this << endl;
+                }
+                *this << endl;
+                break;
+            default: // Invalid element type
+                cerr << "*** Error *** Elment type " << ElementType
+                    << " has not been implemented.\n\n";
+        }
+    }
 }
 
 //	Print total system data

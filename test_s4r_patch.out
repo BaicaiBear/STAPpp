@@ -1,0 +1,91 @@
+TITLE : Patch_Test_S4R_irregular_5
+        (19:16:20 on June 3, 2025, Tuesday)
+
+C O N T R O L   I N F O R M A T I O N
+
+      NUMBER OF NODAL POINTS . . . . . . . . . . (NUMNP)  =     4
+      NUMBER OF ELEMENT GROUPS . . . . . . . . . (NUMEG)  =     1
+      NUMBER OF LOAD CASES . . . . . . . . . . . (NLCASE) =     1
+      SOLUTION MODE  . . . . . . . . . . . . . . (MODEX)  =     1
+         EQ.0, DATA CHECK
+         EQ.1, EXECUTION
+
+ N O D A L   P O I N T   D A T A
+
+    NODE       BOUNDARY                         NODAL POINT
+   NUMBER  CONDITION  CODES                     COORDINATES
+        1    1    1    1       0.00000e+00    0.00000e+00    0.00000e+00
+        2    0    0    0       1.00000e+01    0.00000e+00    0.00000e+00
+        3    0    0    0       1.00000e+01    1.00000e+01    0.00000e+00
+        4    1    1    1       0.00000e+00    1.00000e+01    0.00000e+00
+
+ EQUATION NUMBERS
+
+   NODE NUMBER   DEGREES OF FREEDOM
+        N           X    Y    Z
+        1           0    0    0
+        2           1    2    3
+        3           4    5    6
+        4           0    0    0
+
+ L O A D   C A S E   D A T A
+
+     LOAD CASE NUMBER . . . . . . . =     1
+     NUMBER OF CONCENTRATED LOADS . =     2
+
+    NODE       DIRECTION      LOAD
+   NUMBER                   MAGNITUDE
+      2            3       -1.00000e+00
+      3            3       -1.00000e+00
+
+ E L E M E N T   G R O U P   D A T A
+
+
+ E L E M E N T   D E F I N I T I O N
+
+ ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ) . . =    2
+     EQ.1, TRUSS ELEMENTS
+     EQ.2, ELEMENTS CURRENTLY
+     EQ.3, NOT AVAILABLE
+
+ NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ) . . =    1
+
+2 has not been implemented yet.
+	TOTAL SYSTEM DATA
+
+     NUMBER OF EQUATIONS . . . . . . . . . . . . . .(NEQ) = 6
+     NUMBER OF MATRIX ELEMENTS . . . . . . . . . . .(NWK) = 21
+     MAXIMUM HALF BANDWIDTH  . . . . . . . . . . . .(MK ) = 6
+     MEAN HALF BANDWIDTH . . . . . . . . . . . . . .(MM ) = 3
+
+
+ LOAD CASE    1
+
+
+ D I S P L A C E M E N T S
+
+  NODE           X-DISPLACEMENT    Y-DISPLACEMENT    Z-DISPLACEMENT
+
+ D I S P L A C E M E N T S (S4R: theta_x, theta_y, w)
+
+  NODE         THETA_X(RAD)    THETA_Y(RAD)    W (OUT OF PLANE)
+     1       0.00000e+00       0.00000e+00       0.00000e+00
+     2      -5.82132e-07      -1.20441e-07      -2.94186e-06
+     3      -5.82132e-07       1.20441e-07      -2.94186e-06
+     4       0.00000e+00       0.00000e+00       0.00000e+00
+
+ S T R E S S  C A L C U L A T I O N S  F O R  E L E M E N T  G R O U P    1
+
+  ELEMENT     Mx           My           Mxy          Qx           Qy
+  NUMBER
+    1 -1.00000e+00 -9.92647e-02  3.31853e-15 -2.00000e-01 -1.84061e-16
+
+
+ S O L U T I O N   T I M E   L O G   I N   S E C 
+
+     TIME FOR INPUT PHASE = 1.25000e-03
+     TIME FOR CALCULATION OF STIFFNESS MATRIX = 4.90000e-05
+     TIME FOR FACTORIZATION AND LOAD CASE SOLUTIONS = 8.90000e-05
+
+     T O T A L   S O L U T I O N   T I M E = 1.38800e-03
+

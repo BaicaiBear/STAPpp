@@ -31,3 +31,13 @@ void CBarMaterial::Write(COutputter& output)
 {
 	output << setw(16) << E << setw(16) << Area << endl;
 }
+
+// S4R壳单元材料类实现
+bool CS4RMaterial::Read(ifstream& Input) {
+    Input >> nset;
+    Input >> E >> nu >> thickness;
+    return true;
+}
+void CS4RMaterial::Write(COutputter& output) {
+    output << setw(16) << E << setw(16) << nu << setw(16) << thickness << setw(16) << endl;
+}

@@ -7,7 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(STAPPP_DEBUG "Output detailed results for debugging." OFF)
 if(STAPPP_DEBUG)
-    target_compile_definitions(stap++ PRIVATE _DEBUG_)
+    add_definitions(-D_DEBUG_)
 endif()
 
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS h/*.h)
