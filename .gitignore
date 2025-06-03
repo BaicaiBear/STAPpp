@@ -10,3 +10,4 @@ debug/**
 **/CMakeCache.txt
 **/Makefile
 stap++
+cmake

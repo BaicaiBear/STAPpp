@@ -167,6 +167,8 @@ void COutputter::OutputElementInfo()
 			case ElementTypes::C3D8R: // C3D8R element
 				OutputC3D8RElements(EleGrp);
 				break;
+			case ElementTypes::S4R: // S4R element
+				*this << " I don't think it is necesasry to output the element info for S4R." << endl << "You can use utils/visualize_s4r_patch.py to visualize the S4R element." << endl;
 		    default:
 		        *this << ElementType << " has not been implemented yet." << endl;
 		        break;
@@ -321,26 +323,32 @@ void COutputter::OutputNodalDisplacement()
         if (s4r_nodes.count(NodeList[np].NodeNumber) == 0) {
             NodeList[np].WriteNodalDisplacement(*this, Displacement);
         }
-    }
-    *this << endl;
-    if (!s4r_nodes.empty()) {
-        *this << " D I S P L A C E M E N T S (S4R: theta_x, theta_y, w)" << endl << endl;
-        *this << "  NODE         THETA_X(RAD)    THETA_Y(RAD)    W (OUT OF PLANE)" << endl;
-        for (unsigned int np = 0; np < FEMData->GetNUMNP(); np++) {
-            if (s4r_nodes.count(NodeList[np].NodeNumber) > 0) {
-                *this << setw(6) << NodeList[np].NodeNumber;
-                for (int d = 0; d < 3; ++d) {
-                    unsigned int eqn = NodeList[np].bcode[d];
-                    if (eqn)
-                        *this << setw(18) << Displacement[eqn - 1];
-                    else
-                        *this << setw(18) << 0.0;
-                }
-                *this << endl;
-            }
-        }
-        *this << endl;
-    }
+		else {
+			*this << setw(5) << NodeList[np].NodeNumber << "        " << setw(18) << 0.0 << setw(18) << 0.0;
+			if (NodeList[np].bcode[2] == 0) *this << setw(18) << 0.0;
+			else *this << setw(18) << Displacement[NodeList[np].bcode[2] - 1];
+			*this << endl;
+		}
+	}
+    // *this << endl;
+    // if (!s4r_nodes.empty()) {
+    //     *this << " D I S P L A C E M E N T S (S4R: theta_x, theta_y, w)" << endl << endl;
+    //     *this << "  NODE         THETA_X(RAD)    THETA_Y(RAD)    W (OUT OF PLANE)" << endl;
+    //     for (unsigned int np = 0; np < FEMData->GetNUMNP(); np++) {
+    //         if (s4r_nodes.count(NodeList[np].NodeNumber) > 0) {
+    //             *this << setw(6) << NodeList[np].NodeNumber;
+    //             for (int d = 0; d < 3; ++d) {
+    //                 unsigned int eqn = NodeList[np].bcode[d];
+    //                 if (eqn)
+    //                     *this << setw(18) << Displacement[eqn - 1];
+    //                 else
+    //                     *this << setw(18) << 0.0;
+    //             }
+    //             *this << endl;
+    //         }
+    //     }
+    //     *this << endl;
+    // }
 }
 
 //	Calculate stresses

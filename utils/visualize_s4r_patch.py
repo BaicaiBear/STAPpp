@@ -9,7 +9,7 @@ elements = []
 displacements = {}
 stresses = {}
 
-with open('plate-example_8x8.dat', 'r') as f:
+with open('data/test_s4r_patch.dat', 'r') as f:
     lines = f.readlines()
     # 读取节点
     node_start = 2
@@ -26,12 +26,12 @@ with open('plate-example_8x8.dat', 'r') as f:
                 elements.append([n1, n2, n3, n4])
 
 # 读取out文件中的位移和应力
-with open('plate-example_8x8.out', 'r') as f:
+with open('data/test_s4r_patch.out', 'r') as f:
     lines = f.readlines()
     # 位移
     disp_start = None
     for idx, line in enumerate(lines):
-        if ' D I S P L A C E M E N T S (S4R: theta_x, theta_y, w)' in line:
+        if ' D I S P L A C E M E N T S' in line:
             disp_start = idx + 3
             break
     if disp_start:
@@ -43,7 +43,7 @@ with open('plate-example_8x8.out', 'r') as f:
             if len(parts) < 4:
                 continue  # 跳过空行或格式不对的行
             node = int(parts[0])
-            disp = np.array([0, 0, float(parts[3])])
+            disp = np.array([float(parts[1]), float(parts[2]), float(parts[3])])
             displacements[node] = disp
             print(f"Node {node}: Displacement = {disp}")
 
