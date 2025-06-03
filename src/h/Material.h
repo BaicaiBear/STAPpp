@@ -63,3 +63,20 @@ public:
     virtual bool Read(ifstream& Input) override;
     virtual void Write(COutputter& output) override;
 };
+
+class CC3D8RMaterial : public CMaterial
+{
+public:
+	// Young's modulus
+	double E;
+	// Poisson's ratio
+	double nu;
+
+public:
+
+//!	Read material data from stream Input
+	virtual bool Read(ifstream& Input);
+
+//!	Write material data to Stream
+	virtual void Write(COutputter& output);
+};

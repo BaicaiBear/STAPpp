@@ -3,3 +3,8 @@ build/
 data/
 **/CMakeFiles/**
 **/build/**
+**/cmake/**
+
+ljlj
+
+debug

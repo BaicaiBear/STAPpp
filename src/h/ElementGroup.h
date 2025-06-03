@@ -14,6 +14,7 @@
 
 #include "Element.h"
 #include "Bar.h"
+#include "C3D8R.h"
 #include "Material.h"
 #include "Node.h"
 
@@ -24,7 +25,8 @@ enum ElementTypes
 {
     UNDEFINED = 0,
     Bar,    // Bar element
-    S4R     // S4R 4节点壳单元
+    C3D8R,  // 8-node brick element with reduced integration
+    S4R     // 4-node shell element with reduced integration
 };
 
 //! Element group class

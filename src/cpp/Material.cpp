@@ -41,3 +41,20 @@ bool CS4RMaterial::Read(ifstream& Input) {
 void CS4RMaterial::Write(COutputter& output) {
     output << setw(16) << E << setw(16) << nu << setw(16) << thickness << setw(16) << endl;
 }
+
+
+//	Read material data from stream Input
+bool CC3D8RMaterial::Read(ifstream& Input)
+{
+	Input >> nset;	// Number of property set
+
+	Input >> E >> nu;	// Young's modulus and Poisson's ratio
+
+	return true;
+}
+
+//	Write material data to Stream
+void CC3D8RMaterial::Write(COutputter& output)
+{
+	output << setw(16) << E << setw(16) << nu << endl;
+}

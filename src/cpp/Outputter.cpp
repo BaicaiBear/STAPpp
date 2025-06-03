@@ -9,6 +9,7 @@
 /*****************************************************************************/
 
 #include <ctime>
+#include <cmath>
 #include <set>
 #include "S4R.h"
 
@@ -163,12 +164,61 @@ void COutputter::OutputElementInfo()
 			case ElementTypes::Bar: // Bar element
 				OutputBarElements(EleGrp);
 				break;
+			case ElementTypes::C3D8R: // C3D8R element
+				OutputC3D8RElements(EleGrp);
+				break;
 		    default:
 		        *this << ElementType << " has not been implemented yet." << endl;
 		        break;
 		}
 	}
 }
+//	Output C3D8R element data
+void COutputter::OutputC3D8RElements(unsigned int EleGrp)
+{
+	CDomain* FEMData = CDomain::GetInstance();
+
+	CElementGroup& ElementGroup = FEMData->GetEleGrpList()[EleGrp];
+	unsigned int NUMMAT = ElementGroup.GetNUMMAT();
+
+	*this << " M A T E R I A L   D E F I N I T I O N" << endl
+		  << endl;
+	*this << " NUMBER OF DIFFERENT SETS OF MATERIAL" << endl;
+	*this << " AND CONSTANTS  . . . . . . . . . . .( NPAR(3) ) . . =" << setw(5) << NUMMAT
+		  << endl
+		  << endl;
+
+	*this << "  SET       YOUNG'S     POISSON'S" << endl
+		  << " NUMBER     MODULUS        RATIO" << endl
+		  << "               E            nu" << endl;
+
+	*this << setiosflags(ios::scientific) << setprecision(5);
+
+	//	Loop over for all property sets
+	for (unsigned int mset = 0; mset < NUMMAT; mset++)
+    {
+        *this << setw(5) << mset+1;
+		ElementGroup.GetMaterial(mset).Write(*this);
+    }
+
+	*this << endl << endl
+		  << " E L E M E N T   I N F O R M A T I O N" << endl;
+    
+	*this << " ELEMENT     NODE     NODE     NODE     NODE     NODE     NODE     NODE     NODE       MATERIAL" << endl
+		  << " NUMBER-N      I        J        K        L        M        N        O        P       SET NUMBER" << endl;
+
+	unsigned int NUME = ElementGroup.GetNUME();
+
+	//	Loop over for all elements in group EleGrp
+	for (unsigned int Ele = 0; Ele < NUME; Ele++)
+    {
+        *this << setw(5) << Ele+1;
+		ElementGroup[Ele].Write(*this);
+    }
+
+	*this << endl;
+}
+
 //	Output bar element data
 void COutputter::OutputBarElements(unsigned int EleGrp)
 {
@@ -331,7 +381,35 @@ void COutputter::OutputElementStress()
                 }
 
                 *this << endl;
+				break;
 
+			case ElementTypes::C3D8R: // C3D8R element
+				*this << "  ELEMENT      SIGMA_X      SIGMA_Y      SIGMA_Z      TAU_XY      TAU_YZ      TAU_ZX     VON MISES" << endl
+					<< "  NUMBER" << endl;
+
+				double stresses[6];
+				for (unsigned int Ele = 0; Ele < NUME; Ele++)
+				{
+					CElement& Element = EleGrp[Ele];
+					Element.ElementStress(stresses, Displacement);
+
+					// Calculate von Mises stress
+					double s1 = stresses[0];
+					double s2 = stresses[1];
+					double s3 = stresses[2];
+					double tau12 = stresses[3];
+					double tau23 = stresses[4];
+					double tau31 = stresses[5];
+					double vonMises = sqrt(0.5 * ((s1-s2)*(s1-s2) + (s2-s3)*(s2-s3) + (s3-s1)*(s3-s1) + 
+									  6.0 * (tau12*tau12 + tau23*tau23 + tau31*tau31)));
+
+					*this << setw(5) << Ele + 1 
+						<< setw(12) << stresses[0] << setw(12) << stresses[1] << setw(12) << stresses[2]
+						<< setw(12) << stresses[3] << setw(12) << stresses[4] << setw(12) << stresses[5]
+						<< setw(12) << vonMises << endl;
+				}
+
+				*this << endl;
                 break;
             case ElementTypes::S4R:
                 *this << "  ELEMENT     Mx           My           Mxy          Qx           Qy" << endl;
@@ -349,7 +427,7 @@ void COutputter::OutputElementStress()
                 *this << endl;
                 break;
             default: // Invalid element type
-                cerr << "*** Error *** Elment type " << ElementType
+                cerr << "*** Error *** Element type " << ElementType
                     << " has not been implemented.\n\n";
         }
     }

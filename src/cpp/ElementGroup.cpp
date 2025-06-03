@@ -67,6 +67,10 @@ void CElementGroup::CalculateMemberSize()
             ElementSize_ = sizeof(CBar);
             MaterialSize_ = sizeof(CBarMaterial);
             break;
+        case ElementTypes::C3D8R:
+            ElementSize_ = sizeof(CC3D8R);
+            MaterialSize_ = sizeof(CC3D8RMaterial);
+            break;
         case ElementTypes::S4R:
             ElementSize_ = sizeof(CS4R);
             MaterialSize_ = sizeof(CS4RMaterial);
@@ -86,6 +90,9 @@ void CElementGroup::AllocateElements(std::size_t size)
         case ElementTypes::Bar:
             ElementList_ = new CBar[size];
             break;
+        case ElementTypes::C3D8R:
+            ElementList_ = new CC3D8R[size];
+            break;
         case ElementTypes::S4R:
             ElementList_ = new CS4R[size];
             break;
@@ -102,6 +109,9 @@ void CElementGroup::AllocateMaterials(std::size_t size)
     {
         case ElementTypes::Bar:
             MaterialList_ = new CBarMaterial[size];
+            break;
+        case ElementTypes::C3D8R:
+            MaterialList_ = new CC3D8RMaterial[size];
             break;
         case ElementTypes::S4R:
             MaterialList_ = new CS4RMaterial[size];
