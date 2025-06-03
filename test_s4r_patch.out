@@ -1,5 +1,5 @@
 TITLE : Patch_Test_S4R_irregular_5
-        (19:16:20 on June 3, 2025, Tuesday)
+        (19:40:40 on June 3, 2025, Tuesday)
 
 C O N T R O L   I N F O R M A T I O N
 
@@ -43,14 +43,14 @@ C O N T R O L   I N F O R M A T I O N
 
  E L E M E N T   D E F I N I T I O N
 
- ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ) . . =    2
+ ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ) . . =    3
      EQ.1, TRUSS ELEMENTS
      EQ.2, ELEMENTS CURRENTLY
      EQ.3, NOT AVAILABLE
 
  NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ) . . =    1
 
-2 has not been implemented yet.
+3 has not been implemented yet.
 	TOTAL SYSTEM DATA
 
      NUMBER OF EQUATIONS . . . . . . . . . . . . . .(NEQ) = 6
@@ -83,9 +83,9 @@ C O N T R O L   I N F O R M A T I O N
 
  S O L U T I O N   T I M E   L O G   I N   S E C 
 
-     TIME FOR INPUT PHASE = 1.25000e-03
-     TIME FOR CALCULATION OF STIFFNESS MATRIX = 4.90000e-05
-     TIME FOR FACTORIZATION AND LOAD CASE SOLUTIONS = 8.90000e-05
+     TIME FOR INPUT PHASE = 7.81000e-04
+     TIME FOR CALCULATION OF STIFFNESS MATRIX = 5.40000e-05
+     TIME FOR FACTORIZATION AND LOAD CASE SOLUTIONS = 1.23000e-04
 
-     T O T A L   S O L U T I O N   T I M E = 1.38800e-03
+     T O T A L   S O L U T I O N   T I M E = 9.58000e-04
 

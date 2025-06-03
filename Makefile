@@ -154,6 +154,30 @@ cpp/Bar.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/stap++.dir/build.make CMakeFiles/stap++.dir/cpp/Bar.cpp.s
 .PHONY : cpp/Bar.cpp.s
 
+cpp/C3D8R.o: cpp/C3D8R.cpp.o
+.PHONY : cpp/C3D8R.o
+
+# target to build an object file
+cpp/C3D8R.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stap++.dir/build.make CMakeFiles/stap++.dir/cpp/C3D8R.cpp.o
+.PHONY : cpp/C3D8R.cpp.o
+
+cpp/C3D8R.i: cpp/C3D8R.cpp.i
+.PHONY : cpp/C3D8R.i
+
+# target to preprocess a source file
+cpp/C3D8R.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stap++.dir/build.make CMakeFiles/stap++.dir/cpp/C3D8R.cpp.i
+.PHONY : cpp/C3D8R.cpp.i
+
+cpp/C3D8R.s: cpp/C3D8R.cpp.s
+.PHONY : cpp/C3D8R.s
+
+# target to generate assembly for a file
+cpp/C3D8R.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stap++.dir/build.make CMakeFiles/stap++.dir/cpp/C3D8R.cpp.s
+.PHONY : cpp/C3D8R.cpp.s
+
 cpp/Clock.o: cpp/Clock.cpp.o
 .PHONY : cpp/Clock.o
 
@@ -406,6 +430,9 @@ help:
 	@echo "... cpp/Bar.o"
 	@echo "... cpp/Bar.i"
 	@echo "... cpp/Bar.s"
+	@echo "... cpp/C3D8R.o"
+	@echo "... cpp/C3D8R.i"
+	@echo "... cpp/C3D8R.s"
 	@echo "... cpp/Clock.o"
 	@echo "... cpp/Clock.i"
 	@echo "... cpp/Clock.s"

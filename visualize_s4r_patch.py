@@ -31,7 +31,7 @@ with open('plate-example_8x8.out', 'r') as f:
     # 位移
     disp_start = None
     for idx, line in enumerate(lines):
-        if ' D I S P L A C E M E N T S' in line:
+        if ' D I S P L A C E M E N T S (S4R: theta_x, theta_y, w)' in line:
             disp_start = idx + 3
             break
     if disp_start:
