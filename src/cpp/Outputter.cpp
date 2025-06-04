@@ -168,7 +168,8 @@ void COutputter::OutputElementInfo()
 				OutputC3D8RElements(EleGrp);
 				break;
 			case ElementTypes::S4R: // S4R element
-				*this << " I don't think it is necesasry to output the element info for S4R." << endl << "You can use utils/visualize_s4r_patch.py to visualize the S4R element." << endl;
+				*this << " I don't think it is necesasry to output the element info for S4R." << endl << "You can use utils/visualize_s4r_patch.py to visualize the S4R element." << endl << endl;
+				break;
 		    default:
 		        *this << ElementType << " has not been implemented yet." << endl;
 		        break;
@@ -300,35 +301,10 @@ void COutputter::OutputNodalDisplacement()
     double* Displacement = FEMData->GetDisplacement();
     *this << setiosflags(ios::scientific);
 
-    std::set<unsigned int> s4r_nodes;
-    for (unsigned int eg = 0; eg < FEMData->GetNUMEG(); ++eg) {
-        if (FEMData->GetEleGrpList()[eg].GetElementType() == ElementTypes::S4R) {
-            CElementGroup& grp = FEMData->GetEleGrpList()[eg];
-            unsigned int NUME = grp.GetNUME();
-            for (unsigned int e = 0; e < NUME; ++e) {
-                CElement& ele = grp[e];
-                CS4R* s4r = dynamic_cast<CS4R*>(&ele);
-                if (s4r) {
-                    for (unsigned int ni = 0; ni < s4r->GetNEN(); ++ni) {
-                        CNode* pNode = s4r->GetNode(ni);
-                        s4r_nodes.insert(pNode->NodeNumber);
-                    }
-                }
-            }
-        }
-    }
     *this << " D I S P L A C E M E N T S" << endl << endl;
-    *this << "  NODE           X-DISPLACEMENT    Y-DISPLACEMENT    Z-DISPLACEMENT" << endl;
+    *this << "  NODE           X-DISPLACEMENT    Y-DISPLACEMENT    Z-DISPLACEMENT    THETA-X    THETA-Y    THETA-Z" << endl;
     for (unsigned int np = 0; np < FEMData->GetNUMNP(); np++) {
-        if (s4r_nodes.count(NodeList[np].NodeNumber) == 0) {
-            NodeList[np].WriteNodalDisplacement(*this, Displacement);
-        }
-		else {
-			*this << setw(5) << NodeList[np].NodeNumber << "        " << setw(18) << 0.0 << setw(18) << 0.0;
-			if (NodeList[np].bcode[2] == 0) *this << setw(18) << 0.0;
-			else *this << setw(18) << Displacement[NodeList[np].bcode[2] - 1];
-			*this << endl;
-		}
+		NodeList[np].WriteNodalDisplacement(*this, Displacement);
 	}
     // *this << endl;
     // if (!s4r_nodes.empty()) {

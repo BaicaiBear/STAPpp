@@ -14,7 +14,7 @@ using namespace std;
 CS4R::CS4R() {
     NEN_ = 4; // 4节点
     nodes_ = new CNode*[NEN_];
-    ND_ = 12; // 4节点*3自由度
+    ND_ = 24; // 4节点*3自由度
     LocationMatrix_ = new unsigned int[ND_];
     ElementMaterial_ = nullptr;
 }
@@ -42,6 +42,13 @@ void CS4R::Write(COutputter& output) {
 
 void CS4R::ElementStiffness(double* Matrix) {
     // Mindlin-Reissner壳理论下的S4R单元刚度矩阵实现（膜2x2高斯积分，剪切1点积分）
+    int index = 0;
+    for (int i = 0; i < 24; ++i) {
+        for (int j = i; j >=0; --j) {
+            Matrix[index] = 0.0; // 初始化刚度矩阵
+            index++;
+        }
+    }
     // 1. 计算节点坐标
     double x[4], y[4], z[4];
     for (int i = 0; i < 4; ++i) {
@@ -88,10 +95,10 @@ void CS4R::ElementStiffness(double* Matrix) {
             for (int i = 0; i < 4; ++i) {
                 double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
                 double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
-                Bb[0][i*3+0] = dN_dx;
-                Bb[1][i*3+1] = dN_dy;
-                Bb[2][i*3+0] = dN_dy;
-                Bb[2][i*3+1] = dN_dx;
+                Bb[0][i*3+1] = dN_dx;
+                Bb[1][i*3+2] = dN_dy;
+                Bb[2][i*3+1] = dN_dy;
+                Bb[2][i*3+2] = dN_dx;
             }
             // D矩阵（膜）
             double Db[3][3] = {
@@ -102,16 +109,20 @@ void CS4R::ElementStiffness(double* Matrix) {
             double coeff = E*t*t*t/(12.0*(1-nu*nu));
             for(int i=0;i<3;++i) for(int j=0;j<3;++j) Db[i][j]*=coeff;
             // 组装膜刚度
-            int index = 0;
-            for (int i = 0; i < 12; ++i) {
-                for (int j = i; j >= 0; --j) {
-                    // 只累加膜刚度
-                    for (int m = 0; m < 3; ++m) {
-                        for (int n = 0; n < 3; ++n) {
-                            Matrix[index] += w * detJ * Bb[m][i] * Db[m][n] * Bb[n][j];
+            for (int i = 0; i < NEN_; ++i) {
+                for (int j = 0; j < 3; ++j) {
+                    int f = i*3+j, realf = 6*i+j+2;
+                    for (int p = i; p >= 0; --p){
+                        for (int q = 2; q >= 0; --q) {
+                            int k = p*3+q, realk = 6*p+q+2;
+                            if (k>f) continue; 
+                            for (int m = 0; m < 3; ++m) {
+                                for (int n = 0; n < 3; ++n) {
+                                    Matrix[realf*(realf+1)/2+realf-realk] += w * detJ * Bb[m][f] * Db[m][n] * Bb[n][k];
+                                }
+                            }
                         }
                     }
-                    ++index;
                 }
             }
         }
@@ -136,26 +147,29 @@ void CS4R::ElementStiffness(double* Matrix) {
         double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
         double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
         double Ni = N[i];
-        Bs[0][i*3+0] = -Ni;
-        Bs[1][i*3+1] = -Ni;
-        Bs[0][i*3+2] = dN_dx;
-        Bs[1][i*3+2] = dN_dy;
+        Bs[0][i*3+1] = -Ni;
+        Bs[1][i*3+2] = -Ni;
+        Bs[0][i*3+0] = dN_dx;
+        Bs[1][i*3+0] = dN_dy;
     }
     double Ds[2][2] = { {kappa*G*t, 0}, {0, kappa*G*t} };
     // 组装剪切刚度
-    int index = 0;
-    for (int i = 0; i < 12; ++i) {
-        for (int j = i; j >= 0; --j) {
-            // 只累加剪切刚度
-            for (int m = 0; m < 2; ++m) {
-                for (int n = 0; n < 2; ++n) {
-                    Matrix[index] += w * detJ * Bs[m][i] * Ds[m][n] * Bs[n][j];
+    for (int i = 0; i < NEN_; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            int f = i*3+j, realf = 6*i+j+2;
+            for (int p = i; p >= 0; --p){
+                for (int q = 2; q >= 0; --q) {
+                    int k = p*3+q, realk = 6*p+q+2;
+                    if (k > f) continue; 
+                    for (int m = 0; m < 3; ++m) {
+                        for (int n = 0; n < 3; ++n) {
+                            Matrix[realf*(realf+1)/2+realf-realk] += w * detJ * Bs[m][f] * Ds[m][n] * Bs[n][k];
+                        }
+                    }
                 }
             }
-            ++index;
         }
     }
-
     // // 9. hourglass控制（基于Flanagan-Belytschko方法，简化实现）
     // // hourglass 模式矢量
     // double hg[4] = {1, -1, 1, -1};
@@ -265,11 +279,13 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
     double G = E/(2*(1+nu));
     double Ds[2][2] = { {kappa*G*t, 0}, {0, kappa*G*t} };
     double u[12];
-    for(int i=0;i<12;++i) {
-        if (LocationMatrix_[i] > 0)
-            u[i] = Displacement[LocationMatrix_[i]-1];
-        else
-            u[i] = 0.0;
+    for(int i=0;i<4;++i) {
+        for(int j=2;j<5;++j) {
+            if (LocationMatrix_[i*6+j] > 0)
+                u[i*3+j-2] = Displacement[LocationMatrix_[i*6+j]-1];
+            else
+                u[i*3+j-2] = 0.0;
+        }
     }
     double gamma[2] = {0};
     for(int m=0;m<2;++m) for(int i=0;i<12;++i) gamma[m] += Bs[m][i]*u[i];

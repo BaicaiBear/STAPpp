@@ -9,7 +9,7 @@ elements = []
 displacements = {}
 stresses = {}
 
-with open('data/test_s4r_patch.dat', 'r') as f:
+with open('data/plate_8x8.dat', 'r') as f:
     lines = f.readlines()
     # 读取节点
     node_start = 2
@@ -26,7 +26,7 @@ with open('data/test_s4r_patch.dat', 'r') as f:
                 elements.append([n1, n2, n3, n4])
 
 # 读取out文件中的位移和应力
-with open('data/test_s4r_patch.out', 'r') as f:
+with open('data/plate_8x8.out', 'r') as f:
     lines = f.readlines()
     # 位移
     disp_start = None
@@ -40,7 +40,7 @@ with open('data/test_s4r_patch.out', 'r') as f:
                 break
             print(lines[disp_start + i])
             parts = lines[disp_start + i].split()
-            if len(parts) < 4:
+            if len(parts) < 7:
                 continue  # 跳过空行或格式不对的行
             node = int(parts[0])
             disp = np.array([float(parts[1]), float(parts[2]), float(parts[3])])
@@ -48,7 +48,7 @@ with open('data/test_s4r_patch.out', 'r') as f:
             print(f"Node {node}: Displacement = {disp}")
 
 # 变形放大系数
-def_scale = 1e3  # 10e5 = 1e6
+def_scale = 1  # 10e5 = 1e6
 
 fig = plt.figure(figsize=(10,5))
 ax1 = fig.add_subplot(121, projection='3d')
