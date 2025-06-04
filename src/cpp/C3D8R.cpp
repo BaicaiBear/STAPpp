@@ -19,7 +19,7 @@ CC3D8R::CC3D8R()
 	NEN_ = 8;  // Each element has 8 nodes
 	nodes_ = new CNode*[NEN_];
 	
-	ND_ = 24; // 3*8
+	ND_ = 48; // 6*8
 	LocationMatrix_ = new unsigned int[ND_];
 	
 	ElementMaterial_ = nullptr;
@@ -297,9 +297,16 @@ void CC3D8R::ElementStiffness(double* matrix)
     // --- 12. 将 Ke_local 上三角 / 对称存储 到一维数组 matrix（按列，从对角线开始） ---
     // 存储顺序：对每一列 j，从 i=j, j-1, …, 0 一直到 i=0
     int idxPack = 0;
-    for (int j = 0; j < 24; ++j) {
-        for (int i = j; i >= 0; --i) {
-            matrix[idxPack++] = Ke_local[i][j];
+    for (int m = 0; m < 8; ++m) {
+        for (int n = 0; n < 3; ++n) {
+            int j = m * 3 + n, realj = 6 * m + n;
+            for (int k = m; k >= 0; --k) {
+                for (int l = 3; l >= 0; --l) {
+                    int i = k * 3 + l, reali = 6 * k + l;
+                    if (i > j) continue;  
+                matrix[realj*(realj+1)/2+realj-reali] = Ke_local[i][j];
+                }
+            }
         }
     }
 }
@@ -403,11 +410,13 @@ void CC3D8R::ElementStress(double* stress, double* Displacement)
 
     // --- 9. 从全局位移向量构造单元位移向量 u_e[24] ---
     double u_e[24];
-    for (int i = 0; i < 24; ++i) {
-        if (LocationMatrix_[i] > 0) {
-            u_e[i] = Displacement[LocationMatrix_[i] - 1];
-        } else {
-            u_e[i] = 0.0;
+    for (int i = 0; i < 8; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (LocationMatrix_[6*i+j] > 0) {
+                u_e[3*i+j] = Displacement[LocationMatrix_[6*i+j] - 1];
+            } else {
+                u_e[6*i+j] = 0.0;
+            }
         }
     }
 
