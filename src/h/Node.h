@@ -27,7 +27,7 @@ public:
 	unsigned int NodeNumber;
 
 //!	Order: x, y, z, theta_x, theta_y, theta_z
-	double XYZ[6];
+	double XYZ[3];
 
 //!	Boundary code of each degree of freedom of the node
 /*!		0: The corresponding degree of freedom is active (defined in the global system) */
