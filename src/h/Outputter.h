@@ -56,6 +56,9 @@ public:
 //!	Output bar element data
 	void OutputBarElements(unsigned int EleGrp);
 
+//!	Output B31 element data
+	void OutputB31Elements(unsigned int EleGrp);
+
 //!	Output load data 
 	void OutputLoadInfo(); 
 

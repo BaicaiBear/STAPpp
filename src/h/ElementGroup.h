@@ -24,12 +24,7 @@ enum ElementTypes
 {
     UNDEFINED = 0,
     Bar,    // Bar element
-    Q4,     // 4Q element
-    T3,     // 3T element
-    H8,     // 8H element
-    Beam,   // Beam element
-    Plate,  // Plate element
-    Shell   // Shell elment
+    B31    // 3D beam element
 };
 
 //! Element group class

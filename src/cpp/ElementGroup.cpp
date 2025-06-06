@@ -10,6 +10,7 @@
 
 #include "ElementGroup.h"
 #include "Domain.h"
+#include "B31.h"
 
 CNode* CElementGroup::NodeList_ = nullptr;
 
@@ -66,6 +67,10 @@ void CElementGroup::CalculateMemberSize()
             ElementSize_ = sizeof(CBar);
             MaterialSize_ = sizeof(CBarMaterial);
             break;
+        case ElementTypes::B31:
+            ElementSize_ = sizeof(CB31);
+            MaterialSize_ = sizeof(CB31Material);
+            break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::CalculateMemberSize." << std::endl;
             exit(5);
@@ -81,6 +86,9 @@ void CElementGroup::AllocateElements(std::size_t size)
         case ElementTypes::Bar:
             ElementList_ = new CBar[size];
             break;
+        case ElementTypes::B31:
+            ElementList_ = new CB31[size];
+            break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::AllocateElement." << std::endl;
             exit(5);
@@ -94,6 +102,9 @@ void CElementGroup::AllocateMaterials(std::size_t size)
     {
         case ElementTypes::Bar:
             MaterialList_ = new CBarMaterial[size];
+            break;
+        case ElementTypes::B31:
+            MaterialList_ = new CB31Material[size];
             break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::AllocateMaterial." << std::endl;

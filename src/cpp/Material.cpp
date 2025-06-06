@@ -31,3 +31,16 @@ void CBarMaterial::Write(COutputter& output)
 {
 	output << setw(16) << E << setw(16) << Area << endl;
 }
+
+bool CB31Material::Read(ifstream& Input)
+{
+    Input >> nset;
+    Input >> E >> G >> Area >> Iy >> Iz >> J;
+    return true;
+}
+
+void CB31Material::Write(COutputter& output)
+{
+    output << setw(16) << E << setw(16) << G << setw(16) << Area
+           << setw(16) << Iy << setw(16) << Iz << setw(16) << J << endl;
+}
