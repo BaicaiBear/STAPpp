@@ -123,6 +123,7 @@ void CElementGroup::AllocateMaterials(std::size_t size)
             break;
         case ElementTypes::S4R:
             MaterialList_ = new CS4RMaterial[size];
+            break;
         case ElementTypes::B31:
             MaterialList_ = new CB31Material[size];
             break;
