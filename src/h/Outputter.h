@@ -68,6 +68,8 @@ public:
 //!	Output displacement data
 	void OutputNodalDisplacement();
 
+	void OutputL2Error();
+
 //!	Output element stresses 
 	void OutputElementStress();
 
@@ -106,5 +108,8 @@ public:
 	void PrintDisplacement();
 
 #endif
+
+    // 导出VTK文件（ParaView可视化）
+    void OutputVTK(const std::string& filename);
 
 };
