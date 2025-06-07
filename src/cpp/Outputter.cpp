@@ -349,35 +349,36 @@ void COutputter::OutputNodalDisplacement()
 
 double ExactSolutionW(double x, double y, double D, double q, double a, double b, double nu)
 {
-    // 只实现w的精确解，简化实现
-    double pi = M_PI;
-    double K = -4 * q * a * a / pow(pi, 3);
-    int m_all[4] = {1, 3, 5, 7};
-    double E[8] = {0};
-    E[1] = 0.3722 * K;
-    E[3] = -0.0380 * K;
-    E[5] = -0.0178 * K;
-    E[7] = -0.0085 * K;
-    double w1 = 0.0, w2 = 0.0, w3 = 0.0;
-    for (int mi = 0; mi < 4; ++mi) {
-        int m = m_all[mi];
-        double a_m = m * pi * b / (2 * a);
-        double b_m = m * pi * a / (2 * b);
-        double A1 = 4 * q * pow(a, 4) / (pow(pi, 5) * D) * pow(-1, (m-1)/2) / pow(m, 5);
-        double B1 = (a_m * tanh(a_m) + 2) / (2 * cosh(a_m));
-        double C1 = 1 / (2 * cosh(a_m));
-        double D1 = m * pi / a;
-        double A2 = -a * a / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(a_m));
-        double B2 = a_m * tanh(a_m);
-        double D2 = m * pi / a;
-        double A3 = -b * b / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(b_m));
-        double B3 = b_m * tanh(b_m);
-        double D3 = m * pi / b;
-        w1 += A1 * cos(D1 * x) * (1 - B1 * cosh(D1 * y) + C1 * D1 * y * sinh(D1 * y));
-        w2 += A2 * cos(D2 * x) * (D2 * y * sinh(D2 * y) - B2 * cosh(D2 * y));
-        w3 += A3 * cos(D3 * y) * (D3 * x * sinh(D3 * x) - B3 * cosh(D3 * x));
-    }
-    return w1 + w2 + w3;
+    // // 只实现w的精确解，简化实现
+    // double pi = M_PI;
+    // double K = -4 * q * a * a / pow(pi, 3);
+    // int m_all[4] = {1, 3, 5, 7};
+    // double E[8] = {0};
+    // E[1] = 0.3722 * K;
+    // E[3] = -0.0380 * K;
+    // E[5] = -0.0178 * K;
+    // E[7] = -0.0085 * K;
+    // double w1 = 0.0, w2 = 0.0, w3 = 0.0;
+    // for (int mi = 0; mi < 4; ++mi) {
+    //     int m = m_all[mi];
+    //     double a_m = m * pi * b / (2 * a);
+    //     double b_m = m * pi * a / (2 * b);
+    //     double A1 = 4 * q * pow(a, 4) / (pow(pi, 5) * D) * pow(-1, (m-1)/2) / pow(m, 5);
+    //     double B1 = (a_m * tanh(a_m) + 2) / (2 * cosh(a_m));
+    //     double C1 = 1 / (2 * cosh(a_m));
+    //     double D1 = m * pi / a;
+    //     double A2 = -a * a / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(a_m));
+    //     double B2 = a_m * tanh(a_m);
+    //     double D2 = m * pi / a;
+    //     double A3 = -b * b / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(b_m));
+    //     double B3 = b_m * tanh(b_m);
+    //     double D3 = m * pi / b;
+    //     w1 += A1 * cos(D1 * x) * (1 - B1 * cosh(D1 * y) + C1 * D1 * y * sinh(D1 * y));
+    //     w2 += A2 * cos(D2 * x) * (D2 * y * sinh(D2 * y) - B2 * cosh(D2 * y));
+    //     w3 += A3 * cos(D3 * y) * (D3 * x * sinh(D3 * x) - B3 * cosh(D3 * x));
+    // }
+    // return w1 + w2 + w3;
+	return 0.0;
 }
 
 // 输出有限元解与精确解的L2误差
