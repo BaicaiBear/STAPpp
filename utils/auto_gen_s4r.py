@@ -12,10 +12,10 @@ def generate_plate_input(N=8, E=2e11, nu=0.3, thickness=0.01, force_val=-1.0):
         for i in range(N + 1):
             for j in range(N + 1):
                 nid = node_id(i, j)
-                x, y, z = j * 1.0, i * 1.0, 0.0
+                x, y, z = j * 8.0 / N, i * 8.0 / N, 0.0
                 # 边界设为 1 1 1，其余为 0 0 0
                 bc = "1   1   1   1   1   1" if i == 0 or j == 0 or i == N or j == N else "1   1   0   0   0   1"
-                f.write(f"{nid:<5d} {bc}   {x:.1f}   {y:.1f}   {z:.1f}\n")
+                f.write(f"{nid:<5d} {bc}   {x:.3f}   {y:.3f}   {z:.3f}\n")
 
         # 内部节点加载力（非边界一圈）
         load_nodes = []
@@ -23,10 +23,11 @@ def generate_plate_input(N=8, E=2e11, nu=0.3, thickness=0.01, force_val=-1.0):
             for j in range(1, N):  # j = 列
                 nid = node_id(i, j)
                 load_nodes.append(nid)
+        force_val = force_val * 8 * 8 / len(load_nodes)  # 平均分配力
 
         f.write(f"1   {len(load_nodes)}\n")
         for nid in load_nodes:
-            f.write(f"{nid:<5d}   3   {force_val:.1f}\n")
+            f.write(f"{nid:<5d}   3   {force_val:.3f}\n")
 
         # 材料与单元信息
         f.write(f"3   {N*N}   1\n")

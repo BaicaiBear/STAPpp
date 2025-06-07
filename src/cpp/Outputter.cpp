@@ -401,22 +401,88 @@ void COutputter::OutputL2Error()
         }
         q /= (a * b);
     }
-    // 计算L2误差（节点坐标中心化）
+    // --- 2x2高斯积分单元内插值L2误差 ---
     double l2_sum = 0.0;
     double l2_exact = 0.0;
-    for (unsigned int np = 0; np < NUMNP; ++np) {
-        double x = NodeList[np].XYZ[0] - a/2.0 - x_min;
-        double y = NodeList[np].XYZ[1] - b/2.0 - y_min;
-        unsigned int eqn = NodeList[np].bcode[2];
-        double w_fem = (eqn ? Displacement[eqn - 1] : 0.0);
-        double w_exact = ExactSolutionW(x, y, D, q, a, b, nu);
-        l2_sum += (w_fem - w_exact) * (w_fem - w_exact);
-        l2_exact += w_exact * w_exact;
+    // 遍历所有S4R单元
+    for (unsigned int eg = 0; eg < NUMEG; ++eg) {
+        CElementGroup& EleGrp = FEMData->GetEleGrpList()[eg];
+        if (EleGrp.GetElementType() != ElementTypes::S4R) continue;
+        unsigned int NUME = EleGrp.GetNUME();
+        for (unsigned int e = 0; e < NUME; ++e) {
+            CElement& elem = EleGrp[e];
+            CNode** enodes = elem.GetNodes();
+            // 节点坐标与单元内自由度
+            double ex[4], ey[4];
+            double eu[4];
+            for (int i = 0; i < 4; ++i) {
+                ex[i] = enodes[i]->XYZ[0];
+                ey[i] = enodes[i]->XYZ[1];
+                unsigned int eqn = enodes[i]->bcode[2];
+                eu[i] = (eqn ? Displacement[eqn - 1] : 0.0);
+            }
+            // 2x2高斯点
+            double gauss[2] = { -1.0/std::sqrt(3.0), 1.0/std::sqrt(3.0) };
+            double weight[2] = { 1.0, 1.0 };
+            for (int gp_x = 0; gp_x < 2; ++gp_x) {
+                for (int gp_y = 0; gp_y < 2; ++gp_y) {
+                    double xi = gauss[gp_x];
+                    double eta = gauss[gp_y];
+                    double wgt = weight[gp_x] * weight[gp_y];
+                    // 形函数
+                    double N[4] = {(1-xi)*(1-eta)/4, (1+xi)*(1-eta)/4, (1+xi)*(1+eta)/4, (1-xi)*(1+eta)/4};
+                    double dN_dxi[4]  = {-(1-eta)/4, (1-eta)/4, (1+eta)/4, -(1+eta)/4};
+                    double dN_deta[4] = {-(1-xi)/4, -(1+xi)/4, (1+xi)/4, (1-xi)/4};
+                    // Jacobi
+                    double dx_dxi = 0, dx_deta = 0, dy_dxi = 0, dy_deta = 0;
+                    for (int i = 0; i < 4; ++i) {
+                        dx_dxi  += dN_dxi[i]  * ex[i];
+                        dx_deta += dN_deta[i] * ex[i];
+                        dy_dxi  += dN_dxi[i]  * ey[i];
+                        dy_deta += dN_deta[i] * ey[i];
+                    }
+                    double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
+                    double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
+                    // 单元内插值w_fem
+                    double w_fem = 0.0;
+                    for (int i = 0; i < 4; ++i) w_fem += N[i] * eu[i];
+                    // 物理坐标（中心化）
+                    double x = 0.0, y = 0.0;
+                    for (int i = 0; i < 4; ++i) {
+                        x += N[i] * ex[i];
+                        y += N[i] * ey[i];
+                    }
+                    x = x - a/2.0 - x_min;
+                    y = y - b/2.0 - y_min;
+                    double w_exact = ExactSolutionW(x, y, D, q, a, b, nu);
+                    l2_sum += (w_fem - w_exact) * (w_fem - w_exact) * detJ * wgt;
+                    l2_exact += w_exact * w_exact * detJ * wgt;
+                }
+            }
+        }
     }
-    double l2_error = sqrt(l2_sum / NUMNP);
+    double l2_error = sqrt(l2_sum / (a*b));
     double l2_rel = sqrt(l2_sum / l2_exact);
     *this << "L2 绝对误差 (w): " << l2_error << endl;
     *this << "L2 相对误差 (w): " << l2_rel << endl << endl;
+    return; // 避免节点法重复输出
+
+    // 计算L2误差（节点坐标中心化）
+    // double l2_sum = 0.0;
+    // double l2_exact = 0.0;
+    // for (unsigned int np = 0; np < NUMNP; ++np) {
+    //     double x = NodeList[np].XYZ[0] - a/2.0 - x_min;
+    //     double y = NodeList[np].XYZ[1] - b/2.0 - y_min;
+    //     unsigned int eqn = NodeList[np].bcode[2];
+    //     double w_fem = (eqn ? Displacement[eqn - 1] : 0.0);
+    //     double w_exact = ExactSolutionW(x, y, D, q, a, b, nu);
+    //     l2_sum += (w_fem - w_exact) * (w_fem - w_exact);
+    //     l2_exact += w_exact * w_exact;
+    // }
+    // double l2_error = sqrt(l2_sum / NUMNP);
+    // double l2_rel = sqrt(l2_sum / l2_exact);
+    // *this << "L2 绝对误差 (w): " << l2_error << endl;
+    // *this << "L2 相对误差 (w): " << l2_rel << endl << endl;
 }
 
 //	Calculate stresses

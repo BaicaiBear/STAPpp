@@ -61,7 +61,7 @@ void CS4R::ElementStiffness(double* Matrix) {
     double t = mat->thickness;
     double E = mat->E;
     double nu = mat->nu;
-    double kappa = 5.0/6.0; // 剪切校正系数
+    double kappa = 6.0/6.0; // 剪切校正系数
     double G = E/(2*(1+nu));
     // 3. 初始化刚度矩阵
     int size = 12 * (12 + 1) / 2;
@@ -87,7 +87,7 @@ void CS4R::ElementStiffness(double* Matrix) {
                 dy_dxi  += dN_dxi[i]  * y[i];
                 dy_deta += dN_deta[i] * y[i];
             }
-            double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+            double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
             double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
             double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
             // B矩阵（膜）
@@ -139,7 +139,7 @@ void CS4R::ElementStiffness(double* Matrix) {
         dy_dxi  += dN_dxi[i]  * y[i];
         dy_deta += dN_deta[i] * y[i];
     }
-    double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+    double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
     double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
     double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
     double Bs[2][12] = {0};
@@ -161,8 +161,8 @@ void CS4R::ElementStiffness(double* Matrix) {
                 for (int q = 2; q >= 0; --q) {
                     int k = p*3+q, realk = 6*p+q+2;
                     if (k > f) continue; 
-                    for (int m = 0; m < 3; ++m) {
-                        for (int n = 0; n < 3; ++n) {
+                    for (int m = 0; m < 2; ++m) {
+                        for (int n = 0; n < 2; ++n) {
                             Matrix[realf*(realf+1)/2+realf-realk] += w * detJ * Bs[m][f] * Ds[m][n] * Bs[n][k];
                         }
                     }
@@ -170,16 +170,6 @@ void CS4R::ElementStiffness(double* Matrix) {
             }
         }
     }
-    // // 9. hourglass控制（基于Flanagan-Belytschko方法，简化实现）
-    // // hourglass 模式矢量
-    // double hg[4] = {1, -1, 1, -1};
-    // double alpha = 0.05; // hourglass 抑制系数（可调）
-    // for(int i=0;i<4;++i) {
-    //     for(int j=0;j<4;++j) {
-    //         // 只对z方向（板厚方向）自由度加hourglass抑制
-    //         Matrix[(i*3+2)*12 + (j*3+2)] += alpha * E * t * hg[i] * hg[j] * detJ;
-    //     }
-    // }
 }
 
 void CS4R::ElementStress(double* stress, double* Displacement) {
@@ -189,6 +179,15 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
         x[i] = nodes_[i]->XYZ[0];
         y[i] = nodes_[i]->XYZ[1];
         z[i] = nodes_[i]->XYZ[2];
+    }
+    double u[12];
+    for(int i=0;i<4;++i) {
+        for(int j=2;j<5;++j) {
+            if (LocationMatrix_[i*6+j] > 0)
+                u[i*3+j-2] = Displacement[LocationMatrix_[i*6+j]-1];
+            else
+                u[i*3+j-2] = 0.0;
+        }
     }
     CS4RMaterial* mat = dynamic_cast<CS4RMaterial*>(ElementMaterial_);
     double t = mat->thickness;
@@ -213,17 +212,17 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
                 dy_dxi  += dN_dxi[i]  * y[i];
                 dy_deta += dN_deta[i] * y[i];
             }
-            double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+            double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
             double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
             double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
             double Bb[3][12] = {0};
             for (int i = 0; i < 4; ++i) {
                 double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
                 double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
-                Bb[0][i*3+0] = dN_dx;
-                Bb[1][i*3+1] = dN_dy;
-                Bb[2][i*3+0] = dN_dy;
-                Bb[2][i*3+1] = dN_dx;
+                Bb[0][i*3+1] = dN_dx;
+                Bb[1][i*3+2] = dN_dy;
+                Bb[2][i*3+1] = dN_dy;
+                Bb[2][i*3+2] = dN_dx;
             }
             double Db[3][3] = {
                 {1, nu, 0},
@@ -232,13 +231,7 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
             };
             double coeff = E*t*t*t/(12.0*(1-nu*nu));
             for(int i=0;i<3;++i) for(int j=0;j<3;++j) Db[i][j]*=coeff;
-            double u[12];
-            for(int i=0;i<12;++i) {
-                if (LocationMatrix_[i] > 0)
-                    u[i] = Displacement[LocationMatrix_[i]-1];
-                else
-                    u[i] = 0.0;
-            }
+            
             double strain[3] = {0};
             for(int m=0;m<3;++m) {
                 for(int i=0;i<12;++i) strain[m] += Bb[m][i]*u[i];
@@ -262,7 +255,7 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
         dy_dxi  += dN_dxi[i]  * y[i];
         dy_deta += dN_deta[i] * y[i];
     }
-    double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+    double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
     double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
     double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
     double Bs[2][12] = {0};
@@ -270,23 +263,15 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
         double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
         double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
         double Ni = N[i];
-        Bs[0][i*3+0] = -Ni;
-        Bs[1][i*3+1] = -Ni;
-        Bs[0][i*3+2] = dN_dx;
-        Bs[1][i*3+2] = dN_dy;
+        Bs[0][i*3+1] = -Ni;
+        Bs[1][i*3+2] = -Ni;
+        Bs[0][i*3+0] = dN_dx;
+        Bs[1][i*3+0] = dN_dy;
     }
     double kappa = 5.0/6.0;
     double G = E/(2*(1+nu));
     double Ds[2][2] = { {kappa*G*t, 0}, {0, kappa*G*t} };
-    double u[12];
-    for(int i=0;i<4;++i) {
-        for(int j=2;j<5;++j) {
-            if (LocationMatrix_[i*6+j] > 0)
-                u[i*3+j-2] = Displacement[LocationMatrix_[i*6+j]-1];
-            else
-                u[i*3+j-2] = 0.0;
-        }
-    }
+
     double gamma[2] = {0};
     for(int m=0;m<2;++m) for(int i=0;i<12;++i) gamma[m] += Bs[m][i]*u[i];
     double shear[2] = {0};
