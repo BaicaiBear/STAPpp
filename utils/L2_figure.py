@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 问题 (4): 计算L2误差（线性单元）
-h_list = [1, 0.5, 0.25, 0.125]
-errors_linear = [2.62437e-01, 1.28634e-01, 5.95555e-02, 3.26347e-02]
+h_list = [4, 2, 1, 0.5, 0.25, 0.125]
+errors_linear = [9.97175e-01, 5.08312e-01, 2.62437e-01, 1.28634e-01, 5.95555e-02, 3.26347e-02]
 
 # 绘制双对数图
 log_h = np.log(h_list)

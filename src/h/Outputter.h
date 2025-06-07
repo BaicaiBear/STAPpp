@@ -106,4 +106,7 @@ public:
 
 #endif
 
+    // 导出VTK文件（ParaView可视化）
+    void OutputVTK(const std::string& filename);
+
 };

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 node_coords = {}
 displacements = {}
 
-with open('data/test_c3d8r.dat', 'r') as f:
+with open('data/plate_8x8.dat', 'r') as f:
     lines = f.readlines()
     node_start = 2
     node_count = int(lines[1].split()[0])
@@ -14,7 +14,7 @@ with open('data/test_c3d8r.dat', 'r') as f:
         node_coords[int(parts[0])] = np.array([float(parts[-3]), float(parts[-2]), float(parts[-1])])
 
 # 读取节点位移
-with open('data/test_c3d8r.out', 'r') as f:
+with open('data/plate_8x8.out', 'r') as f:
     lines = f.readlines()
     disp_start = None
     for idx, line in enumerate(lines):

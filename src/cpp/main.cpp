@@ -118,5 +118,8 @@ int main(int argc, char *argv[])
             << "     TIME FOR FACTORIZATION AND LOAD CASE SOLUTIONS = " << time_solution - time_assemble << endl << endl
             << "     T O T A L   S O L U T I O N   T I M E = " << time_solution << endl << endl;
 
+    // 导出VTK文件，便于ParaView后处理
+    Output->OutputVTK(filename + ".vtk");
+
 	return 0;
 }

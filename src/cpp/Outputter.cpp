@@ -476,8 +476,7 @@ void COutputter::OutputElementStress()
 					double tau12 = stresses[3];
 					double tau23 = stresses[4];
 					double tau31 = stresses[5];
-					double vonMises = sqrt(0.5 * ((s1-s2)*(s1-s2) + (s2-s3)*(s2-s3) + (s3-s1)*(s3-s1) + 
-									  6.0 * (tau12*tau12 + tau23*tau23 + tau31*tau31)));
+					double vonMises = sqrt(0.5 * ((s1-s2)*(s1-s2) + (s2-s3)*(s2-s3) + (s3-s1)*(s3-s1) + 6.0 * (tau12*tau12 + tau23*tau23 + tau31*tau31)));
 
 					*this << setw(5) << Ele + 1 
 						<< setw(12) << stresses[0] << setw(12) << stresses[1] << setw(12) << stresses[2]
@@ -658,3 +657,119 @@ void COutputter::PrintDisplacement()
 }
 
 #endif
+#include <fstream>
+#include <vector>
+#include <string>
+
+void COutputter::OutputVTK(const std::string& filename) {
+    CDomain* FEMData = CDomain::GetInstance();
+    unsigned int NUMNP = FEMData->GetNUMNP();
+    unsigned int NUMEG = FEMData->GetNUMEG();
+    CNode* NodeList = FEMData->GetNodeList();
+    double* Displacement = FEMData->GetDisplacement();
+
+    std::ofstream vtkfile(filename);
+    if (!vtkfile) return;
+
+    // VTK头部
+    vtkfile << "# vtk DataFile Version 3.0\n";
+    vtkfile << "STAP++ Results\n";
+    vtkfile << "ASCII\n";
+    vtkfile << "DATASET UNSTRUCTURED_GRID\n";
+
+    // 节点坐标
+    vtkfile << "POINTS " << NUMNP << " float\n";
+    for (unsigned int i = 0; i < NUMNP; ++i) {
+        vtkfile << NodeList[i].XYZ[0] << " " << NodeList[i].XYZ[1] << " " << NodeList[i].XYZ[2] << "\n";
+    }
+
+    // 统计单元总数和单元节点总数
+    unsigned int total_cells = 0, total_cell_size = 0;
+    std::vector<std::pair<int, std::vector<unsigned int>>> cell_info; // {VTK类型, 节点编号}
+    for (unsigned int eg = 0; eg < NUMEG; ++eg) {
+        CElementGroup& EleGrp = FEMData->GetEleGrpList()[eg];
+        unsigned int NUME = EleGrp.GetNUME();
+        ElementTypes etype = EleGrp.GetElementType();
+        for (unsigned int e = 0; e < NUME; ++e) {
+            std::vector<unsigned int> conn;
+            int vtk_type = 0;
+            CElement& elem = EleGrp[e];
+            CNode** elem_nodes = elem.GetNodes();
+            if (etype == ElementTypes::Bar) {
+                // Bar: 2节点，VTK_LINE=3
+                conn.push_back(elem_nodes[0]->NodeNumber - 1);
+                conn.push_back(elem_nodes[1]->NodeNumber - 1);
+                vtk_type = 3;
+            } else if (etype == ElementTypes::S4R) {
+                // S4R: 4节点，VTK_QUAD=9
+                for (int k = 0; k < 4; ++k)
+                    conn.push_back(elem_nodes[k]->NodeNumber - 1);
+                vtk_type = 9;
+            } else if (etype == ElementTypes::C3D8R) {
+                // C3D8R: 8节点，VTK_HEXAHEDRON=12
+                for (int k = 0; k < 8; ++k)
+                    conn.push_back(elem_nodes[k]->NodeNumber - 1);
+                vtk_type = 12;
+            }
+            if (!conn.empty()) {
+                cell_info.push_back({vtk_type, conn});
+                total_cells++;
+                total_cell_size += (1 + conn.size());
+            }
+        }
+    }
+    // 单元连接
+    vtkfile << "CELLS " << total_cells << " " << total_cell_size << "\n";
+    for (const auto& c : cell_info) {
+        vtkfile << c.second.size();
+        for (auto nid : c.second) vtkfile << " " << nid;
+        vtkfile << "\n";
+    }
+    // 单元类型
+    vtkfile << "CELL_TYPES " << total_cells << "\n";
+    for (const auto& c : cell_info) vtkfile << c.first << "\n";
+
+    // 节点数据：位移
+    vtkfile << "POINT_DATA " << NUMNP << "\n";
+    vtkfile << "VECTORS Displacement float\n";
+    for (unsigned int i = 0; i < NUMNP; ++i) {
+        double ux = 0, uy = 0, uz = 0;
+        if (NodeList[i].bcode[0]) ux = Displacement[NodeList[i].bcode[0] - 1];
+        if (NodeList[i].bcode[1]) uy = Displacement[NodeList[i].bcode[1] - 1];
+        if (NodeList[i].bcode[2]) uz = Displacement[NodeList[i].bcode[2] - 1];
+        vtkfile << ux << " " << uy << " " << uz << "\n";
+    }
+
+    // 单元数据：应力
+    vtkfile << "CELL_DATA " << total_cells << "\n";
+    vtkfile << "SCALARS Stress float 1\nLOOKUP_TABLE default\n";
+    unsigned int cell_idx = 0;
+    for (unsigned int eg = 0; eg < NUMEG; ++eg) {
+        CElementGroup& EleGrp = FEMData->GetEleGrpList()[eg];
+        unsigned int NUME = EleGrp.GetNUME();
+        ElementTypes etype = EleGrp.GetElementType();
+        for (unsigned int e = 0; e < NUME; ++e) {
+            double val = 0;
+            if (etype == ElementTypes::Bar) {
+                double stress = 0;
+                EleGrp[e].ElementStress(&stress, Displacement);
+                val = stress;
+            } else if (etype == ElementTypes::C3D8R) {
+                double stress[6];
+                EleGrp[e].ElementStress(stress, Displacement);
+                // 取等效应力（von Mises）
+                double s1 = stress[0], s2 = stress[1], s3 = stress[2];
+                double tau12 = stress[3], tau23 = stress[4], tau31 = stress[5];
+                val = sqrt(0.5 * ((s1-s2)*(s1-s2) + (s2-s3)*(s2-s3) + (s3-s1)*(s3-s1) + 6.0 * (tau12*tau12 + tau23*tau23 + tau31*tau31)));
+            } else if (etype == ElementTypes::S4R) {
+                double stress[5];
+                EleGrp[e].ElementStress(stress, Displacement);
+                // 取Mx为主（可根据需求改为其它分量）
+                val = stress[0];
+            }
+            vtkfile << val << "\n";
+            cell_idx++;
+        }
+    }
+    vtkfile.close();
+}
