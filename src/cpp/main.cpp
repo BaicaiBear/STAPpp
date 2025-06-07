@@ -18,7 +18,6 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    cout << "Hello From Wyz" << endl;
     cout << "**********************************************************" << endl;
     cout << "Program Launch: STAP++" << endl;
 	if (argc != 2) //  Print help message

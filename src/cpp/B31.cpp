@@ -33,7 +33,7 @@ bool CB31::Read(ifstream& Input, CMaterial* MaterialSets, CNode* NodeList)
 	unsigned int N1, N2;	// Left node number and right node number
 
 	Input >> N1 >> N2 >> MSet;
-    ElementMaterial_ = dynamic_cast<CBarMaterial*>(MaterialSets) + MSet - 1;
+    ElementMaterial_ = dynamic_cast<CB31Material*>(MaterialSets) + MSet - 1;
 	nodes_[0] = &NodeList[N1 - 1];
 	nodes_[1] = &NodeList[N2 - 1];
 
@@ -73,10 +73,10 @@ void CB31::ElementStiffness(double* Matrix)
     double GJ_L = G*J/L;
     double EIy_L = E*Iy/L;
     double EIz_L = E*Iz/L;
-    double EIy_L3 = 2*E*Iy/L;
-    double EIz_L3 = 2*E*Iz/L;
     double EIy_L2 = 6*E*Iy/(L*L);
     double EIz_L2 = 6*E*Iz/(L*L);
+    double EIy_L3 = 2*E*Iy/L;
+    double EIz_L3 = 2*E*Iz/L;
     double EIy_L4 = 4*E*Iy/L;
     double EIz_L4 = 4*E*Iz/L;
     // 轴向
@@ -92,7 +92,7 @@ void CB31::ElementStiffness(double* Matrix)
     k[1][11]= k[11][1]= -EIz_L2;
     k[5][5] = k[11][11]= EIz_L4;
     k[5][7] = k[7][5] = -EIz_L2;
-    k[5][11]= k[11][5]= 2*EIz_L4;
+    k[5][11]= k[11][5]= EIz_L3;
     k[7][11]= k[11][7]= -EIz_L2;
     // z方向弯曲
     k[2][2] = k[8][8] = EIy_L3;
@@ -101,7 +101,7 @@ void CB31::ElementStiffness(double* Matrix)
     k[2][10]= k[10][2]=  EIy_L2;
     k[4][4] = k[10][10]= EIy_L4;
     k[4][8] = k[8][4] =  EIy_L2;
-    k[4][10]= k[10][4]= 2*EIy_L4;
+    k[4][10]= k[10][4]= EIy_L3;
     k[8][10]= k[10][8]=  EIy_L2;
 
     // 坐标变换：K_global = T^T * K_local * T
