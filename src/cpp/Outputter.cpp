@@ -169,6 +169,8 @@ void COutputter::OutputElementInfo()
 				break;
 			case ElementTypes::S4R: // S4R element
 				*this << " I don't think it is necesasry to output the element info for S4R." << endl << "You can use utils/visualize_s4r_patch.py to visualize the S4R element." << endl << endl;
+			case ElementTypes::B31: // B31 element
+				OutputB31Elements(EleGrp);
 				break;
 		    default:
 		        *this << ElementType << " has not been implemented yet." << endl;
@@ -265,6 +267,36 @@ void COutputter::OutputBarElements(unsigned int EleGrp)
 		ElementGroup[Ele].Write(*this);
     }
 
+	*this << endl;
+}
+
+// 输出B31单元数据
+void COutputter::OutputB31Elements(unsigned int EleGrp)
+{
+	CDomain* FEMData = CDomain::GetInstance();
+	CElementGroup& ElementGroup = FEMData->GetEleGrpList()[EleGrp];
+	unsigned int NUMMAT = ElementGroup.GetNUMMAT();
+
+	*this << " M A T E R I A L   D E F I N I T I O N (B31)" << endl << endl;
+	*this << " NUMBER OF DIFFERENT SETS OF MATERIAL" << endl;
+	*this << " AND SECTION CONSTANTS  . . . .( NPAR(3) ) . . =" << setw(5) << NUMMAT << endl << endl;
+	*this << "  SET       E           G           A           Iy          Iz          J" << endl;
+	*this << " NUMBER     (Pa)        (Pa)        (m2)        (m4)        (m4)        (m4)" << endl;
+	*this << setiosflags(ios::scientific) << setprecision(5);
+	for (unsigned int mset = 0; mset < NUMMAT; mset++)
+	{
+		*this << setw(5) << mset+1;
+		ElementGroup.GetMaterial(mset).Write(*this); // 假定CB31Material::Write已实现
+	}
+	*this << endl << endl << " E L E M E N T   I N F O R M A T I O N (B31)" << endl;
+	*this << " ELEMENT     NODE     NODE       MATERIAL" << endl
+		  << " NUMBER-N      I        J       SET NUMBER" << endl;
+	unsigned int NUME = ElementGroup.GetNUME();
+	for (unsigned int Ele = 0; Ele < NUME; Ele++)
+	{
+		*this << setw(5) << Ele+1;
+		ElementGroup[Ele].Write(*this); // 假定B31::Write已实现
+	}
 	*this << endl;
 }
 
@@ -415,6 +447,26 @@ void COutputter::OutputElementStress()
                     << " has not been implemented.\n\n";
         }
     }
+
+				break;
+			case ElementTypes::B31: // B31 element
+				*this << "  ELEMENT     N-FORCE      Mx         My         TORSION      SIGMA" << endl;
+				for (unsigned int Ele = 0; Ele < NUME; Ele++)
+				{
+					double stress[5] = {0}; 
+					CElement& Element = EleGrp[Ele];
+					Element.ElementStress(stress, Displacement); 
+					*this << setw(5) << Ele+1;
+					for(int i=0;i<5;++i) *this << setw(12) << stress[i];
+					*this << endl;
+				}
+				*this << endl;
+				break;
+			default: // Invalid element type
+				cerr << "*** Error *** Elment type " << ElementType
+					<< " has not been implemented.\n\n";
+		}
+	}
 }
 
 //	Print total system data

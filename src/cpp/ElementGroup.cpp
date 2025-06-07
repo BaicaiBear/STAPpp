@@ -11,6 +11,7 @@
 #include "ElementGroup.h"
 #include "Domain.h"
 #include "S4R.h"
+#include "B31.h"
 
 CNode* CElementGroup::NodeList_ = nullptr;
 
@@ -75,6 +76,10 @@ void CElementGroup::CalculateMemberSize()
             ElementSize_ = sizeof(CS4R);
             MaterialSize_ = sizeof(CS4RMaterial);
             break;
+        case ElementTypes::B31:
+            ElementSize_ = sizeof(CB31);
+            MaterialSize_ = sizeof(CB31Material);
+            break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::CalculateMemberSize." << std::endl;
             exit(5);
@@ -96,6 +101,9 @@ void CElementGroup::AllocateElements(std::size_t size)
         case ElementTypes::S4R:
             ElementList_ = new CS4R[size];
             break;
+        case ElementTypes::B31:
+            ElementList_ = new CB31[size];
+            break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::AllocateElement." << std::endl;
             exit(5);
@@ -115,6 +123,8 @@ void CElementGroup::AllocateMaterials(std::size_t size)
             break;
         case ElementTypes::S4R:
             MaterialList_ = new CS4RMaterial[size];
+        case ElementTypes::B31:
+            MaterialList_ = new CB31Material[size];
             break;
         default:
             std::cerr << "Type " << ElementType_ << " not available. See CElementGroup::AllocateMaterial." << std::endl;

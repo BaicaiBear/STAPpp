@@ -27,6 +27,7 @@ enum ElementTypes
     Bar,    // Bar element
     C3D8R,  // 8-node brick element with reduced integration
     S4R     // 4-node shell element with reduced integration
+    B31    // 3D beam element
 };
 
 //! Element group class

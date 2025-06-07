@@ -79,4 +79,17 @@ public:
 
 //!	Write material data to Stream
 	virtual void Write(COutputter& output);
+//! Material class for B31 space beam element
+class CB31Material : public CMaterial
+{
+public:
+    double G;    //!< Shear modulus
+    double Area; //!< Sectional area
+    double Iy;   //!< Moment of inertia about y
+    double Iz;   //!< Moment of inertia about z
+    double J;    //!< Torsional constant
+
+public:
+    virtual bool Read(ifstream& Input);
+    virtual void Write(COutputter& output);
 };
