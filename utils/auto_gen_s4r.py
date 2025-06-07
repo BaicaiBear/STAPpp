@@ -44,4 +44,6 @@ def generate_plate_input(N=8, E=2e11, nu=0.3, thickness=0.01, force_val=-1.0):
                 eid += 1
 
 if __name__ == "__main__":
-    generate_plate_input(N=150)
+    for (N) in [8, 16, 32, 64, 128]:
+        generate_plate_input(N)
+

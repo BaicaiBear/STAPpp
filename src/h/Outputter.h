@@ -65,6 +65,8 @@ public:
 //!	Output displacement data
 	void OutputNodalDisplacement();
 
+	void OutputL2Error();
+
 //!	Output element stresses 
 	void OutputElementStress();
 

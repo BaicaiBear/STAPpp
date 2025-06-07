@@ -169,7 +169,6 @@ void COutputter::OutputElementInfo()
 				break;
 			case ElementTypes::S4R: // S4R element
 				*this << " I don't think it is necesasry to output the element info for S4R." << endl << "You can use utils/visualize_s4r_patch.py to visualize the S4R element." << endl << endl;
-				break;
 		    default:
 		        *this << ElementType << " has not been implemented yet." << endl;
 		        break;
@@ -268,6 +267,7 @@ void COutputter::OutputBarElements(unsigned int EleGrp)
 	*this << endl;
 }
 
+
 //	Print load data
 void COutputter::OutputLoadInfo()
 {
@@ -306,25 +306,117 @@ void COutputter::OutputNodalDisplacement()
     for (unsigned int np = 0; np < FEMData->GetNUMNP(); np++) {
 		NodeList[np].WriteNodalDisplacement(*this, Displacement);
 	}
-    // *this << endl;
-    // if (!s4r_nodes.empty()) {
-    //     *this << " D I S P L A C E M E N T S (S4R: theta_x, theta_y, w)" << endl << endl;
-    //     *this << "  NODE         THETA_X(RAD)    THETA_Y(RAD)    W (OUT OF PLANE)" << endl;
-    //     for (unsigned int np = 0; np < FEMData->GetNUMNP(); np++) {
-    //         if (s4r_nodes.count(NodeList[np].NodeNumber) > 0) {
-    //             *this << setw(6) << NodeList[np].NodeNumber;
-    //             for (int d = 0; d < 3; ++d) {
-    //                 unsigned int eqn = NodeList[np].bcode[d];
-    //                 if (eqn)
-    //                     *this << setw(18) << Displacement[eqn - 1];
-    //                 else
-    //                     *this << setw(18) << 0.0;
-    //             }
-    //             *this << endl;
-    //         }
-    //     }
-    //     *this << endl;
-    // }
+    // 输出有限元解与精确解的L2误差
+    OutputL2Error();
+}
+
+// 计算精确解w（板中心线挠度），可根据需要扩展为Mx等
+// 这里只实现w的精确解，参数含义与Python一致
+#include <vector>
+#include <cmath>
+
+double ExactSolutionW(double x, double y, double D, double q, double a, double b, double nu)
+{
+    // 只实现w的精确解，简化实现
+    double pi = M_PI;
+    double K = -4 * q * a * a / pow(pi, 3);
+    int m_all[4] = {1, 3, 5, 7};
+    double E[8] = {0};
+    E[1] = 0.3722 * K;
+    E[3] = -0.0380 * K;
+    E[5] = -0.0178 * K;
+    E[7] = -0.0085 * K;
+    double w1 = 0.0, w2 = 0.0, w3 = 0.0;
+    for (int mi = 0; mi < 4; ++mi) {
+        int m = m_all[mi];
+        double a_m = m * pi * b / (2 * a);
+        double b_m = m * pi * a / (2 * b);
+        double A1 = 4 * q * pow(a, 4) / (pow(pi, 5) * D) * pow(-1, (m-1)/2) / pow(m, 5);
+        double B1 = (a_m * tanh(a_m) + 2) / (2 * cosh(a_m));
+        double C1 = 1 / (2 * cosh(a_m));
+        double D1 = m * pi / a;
+        double A2 = -a * a / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(a_m));
+        double B2 = a_m * tanh(a_m);
+        double D2 = m * pi / a;
+        double A3 = -b * b / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(b_m));
+        double B3 = b_m * tanh(b_m);
+        double D3 = m * pi / b;
+        w1 += A1 * cos(D1 * x) * (1 - B1 * cosh(D1 * y) + C1 * D1 * y * sinh(D1 * y));
+        w2 += A2 * cos(D2 * x) * (D2 * y * sinh(D2 * y) - B2 * cosh(D2 * y));
+        w3 += A3 * cos(D3 * y) * (D3 * x * sinh(D3 * x) - B3 * cosh(D3 * x));
+    }
+    return w1 + w2 + w3;
+}
+
+// 输出有限元解与精确解的L2误差
+void COutputter::OutputL2Error()
+{
+    CDomain* FEMData = CDomain::GetInstance();
+    CNode* NodeList = FEMData->GetNodeList();
+    double* Displacement = FEMData->GetDisplacement();
+    unsigned int NUMNP = FEMData->GetNUMNP();
+    double D = 1.0, nu = 0, E = 0, thickness = 0, q = 0, a = 0, b = 0;
+    bool found = false;
+    unsigned int NUMEG = FEMData->GetNUMEG();
+    for (unsigned int eg = 0; eg < NUMEG; ++eg) {
+        CElementGroup& EleGrp = FEMData->GetEleGrpList()[eg];
+        if (EleGrp.GetElementType() == ElementTypes::S4R) {
+            CS4RMaterial* mat = dynamic_cast<CS4RMaterial*>(&EleGrp.GetMaterial(0));
+            if (mat) {
+                E = mat->E;
+                nu = mat->nu;
+                thickness = mat->thickness;
+                found = true;
+                break;
+            }
+        }
+    }
+    if (!found) {
+        *this << "[L2误差] 未找到S4R材料参数，无法计算精确解。" << endl;
+        return;
+    }
+    // 板刚度D
+    D = E * pow(thickness, 3) / (12.0 * (1.0 - nu * nu));
+    // 板长宽a,b（节点x/y最大最小值）
+    double x_min = 1e20, x_max = -1e20, y_min = 1e20, y_max = -1e20;
+    for (unsigned int np = 0; np < NUMNP; ++np) {
+        double x = NodeList[np].XYZ[0];
+        double y = NodeList[np].XYZ[1];
+        if (x < x_min) x_min = x;
+        if (x > x_max) x_max = x;
+        if (y < y_min) y_min = y;
+        if (y > y_max) y_max = y;
+    }
+    a = x_max - x_min;
+    b = y_max - y_min;
+    // 均布载荷q（取第一个荷载工况所有z向集中荷载之和/面积）
+    q = 0.0;
+    if (FEMData->GetNLCASE() > 0) {
+        CLoadCaseData* LoadData = &FEMData->GetLoadCases()[0];
+        for (unsigned int i = 0; i < LoadData->nloads; ++i) {
+            // dof==3 代表Z方向
+            if (LoadData->dof[i] == 3) {
+                q += LoadData->load[i];
+            }
+        }
+        q /= (a * b);
+    }
+    // 计算L2误差（节点坐标中心化）
+    double l2_sum = 0.0;
+    double l2_exact = 0.0;
+    for (unsigned int np = 0; np < NUMNP; ++np) {
+        double x = NodeList[np].XYZ[0] - a/2.0 - x_min;
+        double y = NodeList[np].XYZ[1] - b/2.0 - y_min;
+        unsigned int eqn = NodeList[np].bcode[2];
+        double w_fem = (eqn ? Displacement[eqn - 1] : 0.0);
+        double w_exact = ExactSolutionW(x, y, D, q, a, b, nu);
+        l2_sum += (w_fem - w_exact) * (w_fem - w_exact);
+        l2_exact += w_exact * w_exact;
+    }
+    double l2_error = sqrt(l2_sum / NUMNP);
+    double l2_rel = sqrt(l2_sum / l2_exact);
+    *this << "L2 绝对误差 (w): " << l2_error << endl;
+    *this << "L2 相对误差 (w): " << l2_rel << endl << endl;
 }
 
 //	Calculate stresses
