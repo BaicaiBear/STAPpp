@@ -79,6 +79,8 @@ public:
 
 //!	Write material data to Stream
 	virtual void Write(COutputter& output);
+};
+
 //! Material class for B31 space beam element
 class CB31Material : public CMaterial
 {

@@ -57,6 +57,8 @@ bool CC3D8RMaterial::Read(ifstream& Input)
 void CC3D8RMaterial::Write(COutputter& output)
 {
 	output << setw(16) << E << setw(16) << nu << endl;
+}
+
 bool CB31Material::Read(ifstream& Input)
 {
     Input >> nset;

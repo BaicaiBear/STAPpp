@@ -441,23 +441,16 @@ void COutputter::OutputElementStress()
                     *this << endl;
                 }
                 *this << endl;
-                break;
-            default: // Invalid element type
-                cerr << "*** Error *** Element type " << ElementType
-                    << " has not been implemented.\n\n";
-        }
-    }
-
-				break;
+            	break;
 			case ElementTypes::B31: // B31 element
 				*this << "  ELEMENT     N-FORCE      Mx         My         TORSION      SIGMA" << endl;
 				for (unsigned int Ele = 0; Ele < NUME; Ele++)
 				{
-					double stress[5] = {0}; 
+					double stress[6] = {0}; 
 					CElement& Element = EleGrp[Ele];
 					Element.ElementStress(stress, Displacement); 
 					*this << setw(5) << Ele+1;
-					for(int i=0;i<5;++i) *this << setw(12) << stress[i];
+					for(int i=0;i<6;++i) *this << setw(12) << stress[i];
 					*this << endl;
 				}
 				*this << endl;
@@ -465,8 +458,8 @@ void COutputter::OutputElementStress()
 			default: // Invalid element type
 				cerr << "*** Error *** Elment type " << ElementType
 					<< " has not been implemented.\n\n";
-		}
-	}
+        }
+	}    
 }
 
 //	Print total system data
