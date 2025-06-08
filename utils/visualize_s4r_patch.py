@@ -9,7 +9,7 @@ elements = []
 displacements = {}
 stresses = {}
 
-with open('data/plate_8x8.dat', 'r') as f:
+with open('data/plate_32x32.dat', 'r') as f:
     lines = f.readlines()
     # 读取节点
     node_start = 2
@@ -26,7 +26,7 @@ with open('data/plate_8x8.dat', 'r') as f:
                 elements.append([n1, n2, n3, n4])
 
 # 读取out文件中的位移和应力
-with open('data/plate_8x8.out', 'r') as f:
+with open('data/plate_32x32.out', 'r') as f:
     lines = f.readlines()
     # 位移
     disp_start = None

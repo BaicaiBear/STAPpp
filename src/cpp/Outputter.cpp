@@ -350,36 +350,36 @@ void COutputter::OutputNodalDisplacement()
 
 double ExactSolutionW(double x, double y, double D, double q, double a, double b, double nu)
 {
-    // // 只实现w的精确解，简化实现
-    // double pi = M_PI;
-    // double K = -4 * q * a * a / pow(pi, 3);
-    // int m_all[4] = {1, 3, 5, 7};
-    // double E[8] = {0};
-    // E[1] = 0.3722 * K;
-    // E[3] = -0.0380 * K;
-    // E[5] = -0.0178 * K;
-    // E[7] = -0.0085 * K;
-    // double w1 = 0.0, w2 = 0.0, w3 = 0.0;
-    // for (int mi = 0; mi < 4; ++mi) {
-    //     int m = m_all[mi];
-    //     double a_m = m * pi * b / (2 * a);
-    //     double b_m = m * pi * a / (2 * b);
-    //     double A1 = 4 * q * pow(a, 4) / (pow(pi, 5) * D) * pow(-1, (m-1)/2) / pow(m, 5);
-    //     double B1 = (a_m * tanh(a_m) + 2) / (2 * cosh(a_m));
-    //     double C1 = 1 / (2 * cosh(a_m));
-    //     double D1 = m * pi / a;
-    //     double A2 = -a * a / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(a_m));
-    //     double B2 = a_m * tanh(a_m);
-    //     double D2 = m * pi / a;
-    //     double A3 = -b * b / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(b_m));
-    //     double B3 = b_m * tanh(b_m);
-    //     double D3 = m * pi / b;
-    //     w1 += A1 * cos(D1 * x) * (1 - B1 * cosh(D1 * y) + C1 * D1 * y * sinh(D1 * y));
-    //     w2 += A2 * cos(D2 * x) * (D2 * y * sinh(D2 * y) - B2 * cosh(D2 * y));
-    //     w3 += A3 * cos(D3 * y) * (D3 * x * sinh(D3 * x) - B3 * cosh(D3 * x));
-    // }
-    // return w1 + w2 + w3;
-	return 0.0;
+    // 只实现w的精确解，简化实现
+    double pi = M_PI;
+    double K = -4 * q * a * a / pow(pi, 3);
+    int m_all[4] = {1, 3, 5, 7};
+    double E[8] = {0};
+    E[1] = 0.3722 * K;
+    E[3] = -0.0380 * K;
+    E[5] = -0.0178 * K;
+    E[7] = -0.0085 * K;
+    double w1 = 0.0, w2 = 0.0, w3 = 0.0;
+    for (int mi = 0; mi < 4; ++mi) {
+        int m = m_all[mi];
+        double a_m = m * pi * b / (2 * a);
+        double b_m = m * pi * a / (2 * b);
+        double A1 = 4 * q * pow(a, 4) / (pow(pi, 5) * D) * pow(-1, (m-1)/2) / pow(m, 5);
+        double B1 = (a_m * tanh(a_m) + 2) / (2 * cosh(a_m));
+        double C1 = 1 / (2 * cosh(a_m));
+        double D1 = m * pi / a;
+        double A2 = -a * a / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(a_m));
+        double B2 = a_m * tanh(a_m);
+        double D2 = m * pi / a;
+        double A3 = -b * b / (2 * pi * pi * D) * E[m] * pow(-1, (m-1)/2) / (m * m * cosh(b_m));
+        double B3 = b_m * tanh(b_m);
+        double D3 = m * pi / b;
+        w1 += A1 * cos(D1 * x) * (1 - B1 * cosh(D1 * y) + C1 * D1 * y * sinh(D1 * y));
+        w2 += A2 * cos(D2 * x) * (D2 * y * sinh(D2 * y) - B2 * cosh(D2 * y));
+        w3 += A3 * cos(D3 * y) * (D3 * x * sinh(D3 * x) - B3 * cosh(D3 * x));
+    }
+    return w1 + w2 + w3;
+	// return 0.0;
 }
 
 // 输出有限元解与精确解的L2误差
@@ -411,43 +411,71 @@ void COutputter::OutputL2Error()
     }
     // 板刚度D
     D = E * pow(thickness, 3) / (12.0 * (1.0 - nu * nu));
-    // 板长宽a,b（节点x/y最大最小值）
-    double x_min = 1e20, x_max = -1e20, y_min = 1e20, y_max = -1e20;
-    for (unsigned int np = 0; np < NUMNP; ++np) {
-        double x = NodeList[np].XYZ[0];
-        double y = NodeList[np].XYZ[1];
-        if (x < x_min) x_min = x;
-        if (x > x_max) x_max = x;
-        if (y < y_min) y_min = y;
-        if (y > y_max) y_max = y;
-    }
-    a = x_max - x_min;
-    b = y_max - y_min;
+    a = 8.0;
+	b = 8.0;
     // 均布载荷q（取第一个荷载工况所有z向集中荷载之和/面积）
-    q = 0.0;
-    if (FEMData->GetNLCASE() > 0) {
-        CLoadCaseData* LoadData = &FEMData->GetLoadCases()[0];
-        for (unsigned int i = 0; i < LoadData->nloads; ++i) {
-            // dof==3 代表Z方向
-            if (LoadData->dof[i] == 3) {
-                q += LoadData->load[i];
-            }
-        }
-        q /= (a * b);
-    }
+    q = -1.0;
     // 计算L2误差（节点坐标中心化）
     double l2_sum = 0.0;
     double l2_exact = 0.0;
-    for (unsigned int np = 0; np < NUMNP; ++np) {
-        double x = NodeList[np].XYZ[0] - a/2.0 - x_min;
-        double y = NodeList[np].XYZ[1] - b/2.0 - y_min;
-        unsigned int eqn = NodeList[np].bcode[2];
-        double w_fem = (eqn ? Displacement[eqn - 1] : 0.0);
-        double w_exact = ExactSolutionW(x, y, D, q, a, b, nu);
-        l2_sum += (w_fem - w_exact) * (w_fem - w_exact);
-        l2_exact += w_exact * w_exact;
+    // 遍历所有S4R单元
+    for (unsigned int eg = 0; eg < NUMEG; ++eg) {
+        CElementGroup& EleGrp = FEMData->GetEleGrpList()[eg];
+        if (EleGrp.GetElementType() != ElementTypes::S4R) continue;
+        unsigned int NUME = EleGrp.GetNUME();
+        for (unsigned int e = 0; e < NUME; ++e) {
+            CElement& elem = EleGrp[e];
+            CNode** enodes = elem.GetNodes();
+            // 节点坐标与单元内自由度
+            double ex[4], ey[4];
+            double eu[4];
+            for (int i = 0; i < 4; ++i) {
+                ex[i] = enodes[i]->XYZ[0];
+                ey[i] = enodes[i]->XYZ[1];
+                unsigned int eqn = enodes[i]->bcode[2];
+                eu[i] = (eqn ? Displacement[eqn - 1] : 0.0);
+            }
+            // 2x2高斯点
+            double gauss[2] = { -1.0/std::sqrt(3.0), 1.0/std::sqrt(3.0) };
+            double weight[2] = { 1.0, 1.0 };
+            for (int gp_x = 0; gp_x < 2; ++gp_x) {
+                for (int gp_y = 0; gp_y < 2; ++gp_y) {
+                    double xi = gauss[gp_x];
+                    double eta = gauss[gp_y];
+                    double wgt = weight[gp_x] * weight[gp_y];
+                    // 形函数
+                    double N[4] = {(1-xi)*(1-eta)/4, (1+xi)*(1-eta)/4, (1+xi)*(1+eta)/4, (1-xi)*(1+eta)/4};
+                    double dN_dxi[4]  = {-(1-eta)/4, (1-eta)/4, (1+eta)/4, -(1+eta)/4};
+                    double dN_deta[4] = {-(1-xi)/4, -(1+xi)/4, (1+xi)/4, (1-xi)/4};
+                    // Jacobi
+                    double dx_dxi = 0, dx_deta = 0, dy_dxi = 0, dy_deta = 0;
+                    for (int i = 0; i < 4; ++i) {
+                        dx_dxi  += dN_dxi[i]  * ex[i];
+                        dx_deta += dN_deta[i] * ex[i];
+                        dy_dxi  += dN_dxi[i]  * ey[i];
+                        dy_deta += dN_deta[i] * ey[i];
+                    }
+                    double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
+                    double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
+                    // 单元内插值w_fem
+                    double w_fem = 0.0;
+                    for (int i = 0; i < 4; ++i) w_fem += N[i] * eu[i];
+                    // 物理坐标（中心化）
+                    double x = 0.0, y = 0.0;
+                    for (int i = 0; i < 4; ++i) {
+                        x += N[i] * ex[i];
+                        y += N[i] * ey[i];
+                    }
+                    x = x - a/2.0;
+                    y = y - b/2.0;
+                    double w_exact = ExactSolutionW(x, y, D, q, a, b, nu);
+					l2_sum += (w_fem - w_exact) * (w_fem - w_exact) * detJ * wgt;
+                    l2_exact += w_exact * w_exact * detJ * wgt;
+                }
+            }
+        }
     }
-    double l2_error = sqrt(l2_sum / NUMNP);
+    double l2_error = sqrt(l2_sum / (a*b));
     double l2_rel = sqrt(l2_sum / l2_exact);
     *this << "L2 绝对误差 (w): " << l2_error << endl;
     *this << "L2 相对误差 (w): " << l2_rel << endl << endl;

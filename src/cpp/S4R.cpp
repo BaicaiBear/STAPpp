@@ -87,7 +87,7 @@ void CS4R::ElementStiffness(double* Matrix) {
                 dy_dxi  += dN_dxi[i]  * y[i];
                 dy_deta += dN_deta[i] * y[i];
             }
-            double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+            double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
             double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
             double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
             // B矩阵（膜）
@@ -95,10 +95,10 @@ void CS4R::ElementStiffness(double* Matrix) {
             for (int i = 0; i < 4; ++i) {
                 double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
                 double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
-                Bb[0][i*3+1] = dN_dx;
-                Bb[1][i*3+2] = dN_dy;
-                Bb[2][i*3+1] = dN_dy;
-                Bb[2][i*3+2] = dN_dx;
+                Bb[0][i*3+2] = -dN_dx;
+                Bb[1][i*3+1] = dN_dy;
+                Bb[2][i*3+2] = -dN_dy;
+                Bb[2][i*3+1] = dN_dx;
             }
             // D矩阵（膜）
             double Db[3][3] = {
@@ -139,7 +139,7 @@ void CS4R::ElementStiffness(double* Matrix) {
         dy_dxi  += dN_dxi[i]  * y[i];
         dy_deta += dN_deta[i] * y[i];
     }
-    double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+    double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
     double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
     double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
     double Bs[2][12] = {0};
@@ -147,8 +147,8 @@ void CS4R::ElementStiffness(double* Matrix) {
         double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
         double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
         double Ni = N[i];
-        Bs[0][i*3+1] = -Ni;
-        Bs[1][i*3+2] = -Ni;
+        Bs[0][i*3+2] = Ni;
+        Bs[1][i*3+1] = -Ni;
         Bs[0][i*3+0] = dN_dx;
         Bs[1][i*3+0] = dN_dy;
     }
@@ -161,8 +161,8 @@ void CS4R::ElementStiffness(double* Matrix) {
                 for (int q = 2; q >= 0; --q) {
                     int k = p*3+q, realk = 6*p+q+2;
                     if (k > f) continue; 
-                    for (int m = 0; m < 3; ++m) {
-                        for (int n = 0; n < 3; ++n) {
+                    for (int m = 0; m < 2; ++m) {
+                        for (int n = 0; n < 2; ++n) {
                             Matrix[realf*(realf+1)/2+realf-realk] += w * detJ * Bs[m][f] * Ds[m][n] * Bs[n][k];
                         }
                     }
@@ -213,16 +213,16 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
                 dy_dxi  += dN_dxi[i]  * y[i];
                 dy_deta += dN_deta[i] * y[i];
             }
-            double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+            double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
             double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
             double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
             double Bb[3][12] = {0};
             for (int i = 0; i < 4; ++i) {
                 double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
                 double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
-                Bb[0][i*3+0] = dN_dx;
+                Bb[0][i*3+2] = -dN_dx;
                 Bb[1][i*3+1] = dN_dy;
-                Bb[2][i*3+0] = dN_dy;
+                Bb[2][i*3+2] = -dN_dy;
                 Bb[2][i*3+1] = dN_dx;
             }
             double Db[3][3] = {
@@ -262,7 +262,7 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
         dy_dxi  += dN_dxi[i]  * y[i];
         dy_deta += dN_deta[i] * y[i];
     }
-    double J[2][2] = {{dx_dxi, dx_deta}, {dy_dxi, dy_deta}};
+    double J[2][2] = {{dx_dxi, dy_dxi}, {dx_deta, dy_deta}};
     double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
     double invJ[2][2] = { { J[1][1]/detJ, -J[0][1]/detJ }, { -J[1][0]/detJ, J[0][0]/detJ } };
     double Bs[2][12] = {0};
@@ -270,10 +270,10 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
         double dN_dx = invJ[0][0]*dN_dxi[i] + invJ[0][1]*dN_deta[i];
         double dN_dy = invJ[1][0]*dN_dxi[i] + invJ[1][1]*dN_deta[i];
         double Ni = N[i];
-        Bs[0][i*3+0] = -Ni;
+        Bs[0][i*3+2] = Ni;
         Bs[1][i*3+1] = -Ni;
-        Bs[0][i*3+2] = dN_dx;
-        Bs[1][i*3+2] = dN_dy;
+        Bs[0][i*3+0] = dN_dx;
+        Bs[1][i*3+0] = dN_dy;
     }
     double kappa = 5.0/6.0;
     double G = E/(2*(1+nu));
