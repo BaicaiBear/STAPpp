@@ -21,7 +21,7 @@ bool CBarMaterial::Read(ifstream& Input)
 {
 	Input >> nset;	// Number of property set
 
-	Input >> E >> Area;	// Young's modulus and section area
+	Input >> E >> Area >> density; // Young's modulus, section area, and density
 
 	return true;
 }
@@ -29,17 +29,17 @@ bool CBarMaterial::Read(ifstream& Input)
 //	Write material data to Stream
 void CBarMaterial::Write(COutputter& output)
 {
-	output << setw(16) << E << setw(16) << Area << endl;
+	output << setw(16) << E << setw(16) << Area << setw(16) << density << endl;
 }
 
 // S4R壳单元材料类实现
 bool CS4RMaterial::Read(ifstream& Input) {
     Input >> nset;
-    Input >> E >> nu >> thickness;
+    Input >> E >> nu >> thickness >> density;
     return true;
 }
 void CS4RMaterial::Write(COutputter& output) {
-    output << setw(16) << E << setw(16) << nu << setw(16) << thickness << setw(16) << endl;
+    output << setw(16) << E << setw(16) << nu << setw(16) << thickness << setw(16) << density << endl;
 }
 
 
@@ -48,7 +48,7 @@ bool CC3D8RMaterial::Read(ifstream& Input)
 {
 	Input >> nset;	// Number of property set
 
-	Input >> E >> nu;	// Young's modulus and Poisson's ratio
+	Input >> E >> nu >> density;	// Young's modulus and Poisson's ratio
 
 	return true;
 }
@@ -56,18 +56,18 @@ bool CC3D8RMaterial::Read(ifstream& Input)
 //	Write material data to Stream
 void CC3D8RMaterial::Write(COutputter& output)
 {
-	output << setw(16) << E << setw(16) << nu << endl;
+	output << setw(16) << E << setw(16) << nu << setw(16) << density << endl;
 }
 
 bool CB31Material::Read(ifstream& Input)
 {
     Input >> nset;
-    Input >> E >> G >> Area >> Iy >> Iz >> J;
+    Input >> E >> G >> Area >> Iy >> Iz >> J >> density;
     return true;
 }
 
 void CB31Material::Write(COutputter& output)
 {
     output << setw(16) << E << setw(16) << G << setw(16) << Area
-           << setw(16) << Iy << setw(16) << Iz << setw(16) << J << endl;
+           << setw(16) << Iy << setw(16) << Iz << setw(16) << J << setw(16) << density << endl;
 }

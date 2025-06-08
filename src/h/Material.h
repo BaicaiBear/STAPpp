@@ -43,6 +43,7 @@ class CBarMaterial : public CMaterial
 public:
 
 	double Area;	//!< Sectional area of a bar element
+    double density; //!< 材料密度
 
 public:
 	
@@ -59,6 +60,7 @@ class CS4RMaterial : public CMaterial
 public:
     double nu;    // 泊松比
     double thickness; // 单元厚度
+    double density; // 材料密度
 
     virtual bool Read(ifstream& Input) override;
     virtual void Write(COutputter& output) override;
@@ -71,6 +73,8 @@ public:
 	double E;
 	// Poisson's ratio
 	double nu;
+	// 材料密度
+	double density;
 
 public:
 
@@ -90,6 +94,7 @@ public:
     double Iy;   //!< Moment of inertia about y
     double Iz;   //!< Moment of inertia about z
     double J;    //!< Torsional constant
+    double density; // 材料密度
 
 public:
     virtual bool Read(ifstream& Input);
