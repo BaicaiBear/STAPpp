@@ -150,9 +150,10 @@ void COutputter::OutputElementInfo()
 
 		*this << " ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ) . . =" << setw(5)
 			  << ElementType << endl;
-		*this << "     EQ.1, TRUSS ELEMENTS" << endl
-			  << "     EQ.2, ELEMENTS CURRENTLY" << endl
-			  << "     EQ.3, NOT AVAILABLE" << endl
+		*this << "     EQ.1, Bar" << endl
+			  << "     EQ.2, C3D8R" << endl
+			  << "     EQ.3, S4R" << endl
+			  << "     EQ.4, B31" << endl
 			  << endl;
 
 		*this << " NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ) . . =" << setw(5) << NUME
@@ -286,7 +287,7 @@ void COutputter::OutputB31Elements(unsigned int EleGrp)
 	for (unsigned int mset = 0; mset < NUMMAT; mset++)
 	{
 		*this << setw(5) << mset+1;
-		ElementGroup.GetMaterial(mset).Write(*this); // 假定CB31Material::Write已实现
+		ElementGroup.GetMaterial(mset).Write(*this);
 	}
 	*this << endl << endl << " E L E M E N T   I N F O R M A T I O N (B31)" << endl;
 	*this << " ELEMENT     NODE     NODE       MATERIAL" << endl
@@ -295,7 +296,7 @@ void COutputter::OutputB31Elements(unsigned int EleGrp)
 	for (unsigned int Ele = 0; Ele < NUME; Ele++)
 	{
 		*this << setw(5) << Ele+1;
-		ElementGroup[Ele].Write(*this); // 假定B31::Write已实现
+		ElementGroup[Ele].Write(*this);
 	}
 	*this << endl;
 }

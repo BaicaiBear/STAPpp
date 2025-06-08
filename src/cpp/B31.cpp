@@ -49,16 +49,16 @@ void CB31::Write(COutputter& output)
 
 //	Calculate element stiffness matrix 
 //	Upper triangular matrix, stored as an array column by colum starting from the diagonal element
+// 在 B31.cpp 中
 void CB31::ElementStiffness(double* Matrix)
 {
-	clear(Matrix, SizeOfStiffnessMatrix());
-    
-    // 获取坐标变换矩阵T和单元长度L
+    // --- 0. 初始化和获取参数 ---
+    clear(Matrix, SizeOfStiffnessMatrix()); // 清零总刚度矩阵
+
     double T[12][12];
     double L;
-    GetTransformationMatrix(T, L);
+    GetTransformationMatrix(T, L); // 获取坐标变换矩阵和单元长度
 
-    // 材料参数
     CB31Material* material_ = dynamic_cast<CB31Material*>(ElementMaterial_);
     double E = material_->E;
     double G = material_->G; 
@@ -66,63 +66,119 @@ void CB31::ElementStiffness(double* Matrix)
     double Iy = material_->Iy; 
     double Iz = material_->Iz;
     double J = material_->J;   
+    
+    // 剪切修正系数，对于矩形截面通常取 5/6
+    const double kappa = 5.0 / 6.0;
+    
+    // 局部坐标系下的单元刚度矩阵 (最终将被填充)
+    double k_local[12][12] = {0};
 
-    // 局部刚度矩阵（12×12）
-    double k[12][12] = {0};
-    double EA_L = E*A/L;
-    double GJ_L = G*J/L;
-    double EIy_L = E*Iy/L;
-    double EIz_L = E*Iz/L;
-    double EIy_L2 = 6*E*Iy/(L*L);
-    double EIz_L2 = 6*E*Iz/(L*L);
-    double EIy_L3 = 2*E*Iy/L;
-    double EIz_L3 = 2*E*Iz/L;
-    double EIy_L4 = 4*E*Iy/L;
-    double EIz_L4 = 4*E*Iz/L;
-    // 轴向
-    k[0][0] = k[6][6] = EA_L;
-    k[0][6] = k[6][0] = -EA_L;
-    // 扭转
-    k[3][3] = k[9][9] = GJ_L;
-    k[3][9] = k[9][3] = -GJ_L;
-    // y方向弯曲
-    k[1][1] = k[7][7] = EIz_L3;
-    k[1][7] = k[7][1] = EIz_L2;
-    k[1][5] = k[5][1] =  EIz_L2;
-    k[1][11]= k[11][1]= -EIz_L2;
-    k[5][5] = k[11][11]= EIz_L4;
-    k[5][7] = k[7][5] = -EIz_L2;
-    k[5][11]= k[11][5]= EIz_L3;
-    k[7][11]= k[11][7]= -EIz_L2;
-    // z方向弯曲
-    k[2][2] = k[8][8] = EIy_L3;
-    k[2][8] = k[8][2] = EIy_L2;
-    k[2][4] = k[4][2] = -EIy_L2;
-    k[2][10]= k[10][2]=  EIy_L2;
-    k[4][4] = k[10][10]= EIy_L4;
-    k[4][8] = k[8][4] =  EIy_L2;
-    k[4][10]= k[10][4]= EIy_L3;
-    k[8][10]= k[10][8]=  EIy_L2;
+    // --- 1. 轴向刚度和扭转刚度 (精确积分, 相当于1点高斯积分) ---
+    k_local[0][0] = E * A / L;   k_local[6][6] = E * A / L;
+    k_local[0][6] = -E * A / L;  k_local[6][0] = -E * A / L;
 
-    // 坐标变换：K_global = T^T * K_local * T
+    k_local[3][3] = G * J / L;   k_local[9][9] = G * J / L;
+    k_local[3][9] = -G * J / L;  k_local[9][3] = -G * J / L;
+
+    // --- 2. 弯曲和剪切刚度 (通过数值积分) ---
+    // 形函数 N(xi) 和其导数 dN/dxi (xi是-1到1的自然坐标)
+    auto N1 = [](double xi){ return 0.5 * (1.0 - xi); };
+    auto N2 = [](double xi){ return 0.5 * (1.0 + xi); };
+    const double dN1_dxi = -0.5;
+    const double dN2_dxi = 0.5;
+    
+    // 物理坐标导数与自然坐标导数的关系: d/dx = (2/L) * d/dxi
+    const double d_dx = 2.0 / L;
+
+    // --- 2a. 弯曲刚度部分 (2点高斯积分) ---
+    const double gauss_points_2[] = {-1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
+    const double gauss_weights_2[] = {1.0, 1.0};
+
+    for (int i = 0; i < 2; ++i) {
+        double xi = gauss_points_2[i];
+        double w = gauss_weights_2[i];
+
+        // 弯曲应变-位移矩阵 B_b (bending)
+        // 对应自由度: [ry1, ry2] for y-bending, [rz1, rz2] for z-bending
+        double B_b_y[2] = {dN1_dxi * d_dx, dN2_dxi * d_dx}; // for y-bending (around y-axis)
+        double B_b_z[2] = {dN1_dxi * d_dx, dN2_dxi * d_dx}; // for z-bending (around z-axis)
+
+        // 组装 K_bb = integral(B_b^T * D_b * B_b) dx
+        // y-bending (关联到 ry1, ry2 自由度, 即 4, 10)
+        double D_b_y = E * Iy;
+        k_local[4][4]   += B_b_y[0] * D_b_y * B_b_y[0] * w * (L / 2.0);
+        k_local[4][10]  += B_b_y[0] * D_b_y * B_b_y[1] * w * (L / 2.0);
+        k_local[10][4]  += B_b_y[1] * D_b_y * B_b_y[0] * w * (L / 2.0);
+        k_local[10][10] += B_b_y[1] * D_b_y * B_b_y[1] * w * (L / 2.0);
+
+        // z-bending (关联到 rz1, rz2 自由度, 即 5, 11)
+        double D_b_z = E * Iz;
+        k_local[5][5]   += B_b_z[0] * D_b_z * B_b_z[0] * w * (L / 2.0);
+        k_local[5][11]  += B_b_z[0] * D_b_z * B_b_z[1] * w * (L / 2.0);
+        k_local[11][5]  += B_b_z[1] * D_b_z * B_b_z[0] * w * (L / 2.0);
+        k_local[11][11] += B_b_z[1] * D_b_z * B_b_z[1] * w * (L / 2.0);
+    }
+    
+    // --- 2b. 剪切刚度部分 (1点减缩积分, xi=0, w=2) ---
+    double xi = 0.0;
+    double w = 2.0;
+    
+    // 形函数在中心点的值
+    double N1_c = N1(xi); double N2_c = N2(xi);
+    
+    // 剪切应变-位移矩阵 B_s (shear)
+    // 对应自由度: [tz1, ry1, tz2, ry2] for y-shear, [ty1, rz1, ty2, rz2] for z-shear
+    
+    // Y-shear (平面 x-z, 抵抗 Tz, 关联 Ry)
+    // gamma_xz = duz/dx - ry
+    double B_s_y[4] = {dN1_dxi * d_dx, -N1_c, dN2_dxi * d_dx, -N2_c};
+    int dof_y[] = {2, 4, 8, 10}; // [tz1, ry1, tz2, ry2]
+    double D_s_y = kappa * G * A;
+    for(int i=0; i<4; ++i) {
+        for(int j=0; j<4; ++j) {
+            k_local[dof_y[i]][dof_y[j]] += B_s_y[i] * D_s_y * B_s_y[j] * w * (L / 2.0);
+        }
+    }
+
+    // Z-shear (平面 x-y, 抵抗 Ty, 关联 Rz)
+    // gamma_xy = duy/dx + rz
+    double B_s_z[4] = {dN1_dxi * d_dx, N1_c, dN2_dxi * d_dx, N2_c};
+    int dof_z[] = {1, 5, 7, 11}; // [ty1, rz1, ty2, rz2]
+    double D_s_z = kappa * G * A;
+    for(int i=0; i<4; ++i) {
+        for(int j=0; j<4; ++j) {
+            k_local[dof_z[i]][dof_z[j]] += B_s_z[i] * D_s_z * B_s_z[j] * w * (L / 2.0);
+        }
+    }
+
+    // --- 3. 坐标变换: K_global = T^T * K_local * T ---
     double temp[12][12] = {0};
     double k_global[12][12] = {0};
+    
     // temp = K_local * T
-    for(int i=0;i<12;i++)
-        for(int j=0;j<12;j++)
-            for(int m=0;m<12;m++)
-                temp[i][j] += k[i][m] * T[m][j];
+    for(int i=0; i<12; i++)
+        for(int j=0; j<12; j++)
+            for(int m=0; m<12; m++)
+                temp[i][j] += k_local[i][m] * T[m][j];
+    
     // k_global = T^T * temp
-    for(int i=0;i<12;i++)
-        for(int j=0;j<12;j++)
-            for(int n=0;n<12;n++)
+    for(int i=0; i<12; i++)
+        for(int j=0; j<12; j++)
+            for(int n=0; n<12; n++)
                 k_global[i][j] += T[n][i] * temp[n][j];
 
-    // 按带状存储方式写入Matrix（上三角，列优先）
-    int idx = 0;
-    for(int j=0;j<12;j++)
-        for(int i=0;i<=j;i++)
-            Matrix[idx++] = k_global[i][j];
+    // --- 4. 填充到一维数组 Matrix (使用项目特有的逆序列优先格式) ---
+    for (unsigned int j = 0; j < ND_; j++)
+    {
+        for (unsigned int i = 0; i <= j; i++)
+        {
+            unsigned int index = (j + 1) * j / 2 + (j - i);
+            if (index < SizeOfStiffnessMatrix())
+            {
+                Matrix[index] = k_global[i][j];
+            }
+        }
+    }
 }
 
 // 计算单元的应力
