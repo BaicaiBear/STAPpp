@@ -520,6 +520,7 @@ void COutputter::OutputElementStress()
 
 				*this << endl;
                 break;
+
             case ElementTypes::S4R:
                 *this << "  ELEMENT     Mx           My           Mxy          Qx           Qy" << endl;
                 *this << "  NUMBER" << endl;
@@ -535,19 +536,26 @@ void COutputter::OutputElementStress()
                 }
                 *this << endl;
             	break;
+
 			case ElementTypes::B31: // B31 element
-				*this << "  ELEMENT     N-FORCE      Mx         My         TORSION      SIGMA" << endl;
-				for (unsigned int Ele = 0; Ele < NUME; Ele++)
-				{
-					double stress[6] = {0}; 
-					CElement& Element = EleGrp[Ele];
-					Element.ElementStress(stress, Displacement); 
-					*this << setw(5) << Ele+1;
-					for(int i=0;i<6;++i) *this << setw(12) << stress[i];
-					*this << endl;
-				}
-				*this << endl;
-				break;
+                *this << "  ELEMENT      Axial-N      Torsion-Mx   Shear-Vy     Shear-Vz     Moment-My    Moment-Mz" << endl;
+                //*this << "  NUMBER" << endl;
+                for (unsigned int Ele = 0; Ele < NUME; Ele++){
+                    double stress[6] = {0}; 
+                    CElement& Element = EleGrp[Ele];
+                    Element.ElementStress(stress, Displacement); 
+                    *this << setw(5) << Ele + 1; // 打印单元号
+                    *this << setw(13) << stress[0]; // N
+                    *this << setw(13) << stress[1]; // T (Mx)
+                    *this << setw(13) << stress[2]; // Vy
+                    *this << setw(13) << stress[3]; // Vz
+                    *this << setw(13) << stress[4]; // My
+                    *this << setw(13) << stress[5]; // Mz
+                    *this << endl;
+                }
+                *this << endl;
+                break;
+
 			default: // Invalid element type
 				cerr << "*** Error *** Elment type " << ElementType
 					<< " has not been implemented.\n\n";
