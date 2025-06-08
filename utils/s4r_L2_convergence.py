@@ -52,7 +52,7 @@ def generate_plate_input(N=8, E=2e11, nu=0.3, thickness=0.01, force_val=-1.0):
 
 
 # 网格尺寸
-N_list = [2, 4, 8, 16, 32, 64, 128, 256]
+N_list = [2, 4, 8, 16, 32, 64]
 L2_errors = []
 h_list = []
 
