@@ -29,7 +29,7 @@ def generate_plate_input(N=8, E=2e11, nu=0.3, thickness=0.01, force_val=-1.0):
             for j in range(1, N):  # j = 列
                 nid = node_id(i, j)
                 load_nodes.append(nid)
-        force_val = force_val * 8 * 8 / len(load_nodes)  # 平均分配力
+        force_val = force_val * 8 * 8 / N / N  # 平均分配力
 
         f.write(f"1   {len(load_nodes)}\n")
         for nid in load_nodes:

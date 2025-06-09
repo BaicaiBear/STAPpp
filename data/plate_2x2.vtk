@@ -28,7 +28,7 @@ VECTORS Displacement float
 0 0 0
 0 0 0
 0 0 0
-0 0 -4.992e-08
+0 0 -1.248e-08
 0 0 0
 0 0 0
 0 0 0
@@ -38,5 +38,5 @@ SCALARS Stress float 1
 LOOKUP_TABLE default
 0
 0
-0.000114286
--0.000114286
+2.85714e-05
+-2.85714e-05
