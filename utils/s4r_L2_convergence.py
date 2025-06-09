@@ -37,7 +37,7 @@ def generate_plate_input(N=8, E=2e11, nu=0.3, thickness=0.01, force_val=-1.0):
 
         # 材料与单元信息
         f.write(f"3   {N*N}   1\n")
-        f.write(f"1   {E:.1e}   {nu:.2f}   {thickness:.3f}\n")
+        f.write(f"1   {E:.1e}   {nu:.2f}   {thickness:.3f}   1000\n")
 
         # 单元定义（4 节点单元）
         eid = 1
@@ -52,7 +52,7 @@ def generate_plate_input(N=8, E=2e11, nu=0.3, thickness=0.01, force_val=-1.0):
 
 
 # 网格尺寸
-N_list = [2,4,8,16,32,64]
+N_list = [8,16]
 L2_errors = []
 h_list = []
 

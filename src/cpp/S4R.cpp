@@ -233,11 +233,13 @@ void CS4R::ElementStress(double* stress, double* Displacement) {
             double coeff = E*t*t*t/(12.0*(1-nu*nu));
             for(int i=0;i<3;++i) for(int j=0;j<3;++j) Db[i][j]*=coeff;
             double u[12];
-            for(int i=0;i<12;++i) {
-                if (LocationMatrix_[i] > 0)
-                    u[i] = Displacement[LocationMatrix_[i]-1];
-                else
-                    u[i] = 0.0;
+            for(int i=0;i<4;++i) {
+                for(int j=2;j<5;++j) {
+                    if (LocationMatrix_[i*6+j] > 0)
+                        u[i*3+j-2] = Displacement[LocationMatrix_[i*6+j]-1];
+                    else
+                        u[i*3+j-2] = 0.0;
+                }
             }
             double strain[3] = {0};
             for(int m=0;m<3;++m) {
