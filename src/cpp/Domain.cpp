@@ -260,30 +260,31 @@ void CDomain::AllocateMatrices()
 //	Assemble the banded gloabl stiffness matrix
 void CDomain::AssembleStiffnessMatrix()
 {
-//	Loop over for all element groups
-	for (unsigned int EleGrp = 0; EleGrp < NUMEG; EleGrp++)
-	{
+//  Loop over for all element groups
+    for (unsigned int EleGrp = 0; EleGrp < NUMEG; EleGrp++)
+    {
         CElementGroup& ElementGrp = EleGrpList[EleGrp];
         unsigned int NUME = ElementGrp.GetNUME();
-
-		unsigned int size = ElementGrp[0].SizeOfStiffnessMatrix();
-		double* Matrix = new double[size];
-
-//		Loop over for all elements in group EleGrp
-		for (unsigned int Ele = 0; Ele < NUME; Ele++)
+        unsigned int size = ElementGrp[0].SizeOfStiffnessMatrix();
+        double* Matrix = new double[size];
+//      Loop over for all elements in group EleGrp
+        for (unsigned int Ele = 0; Ele < NUME; Ele++)
         {
             CElement& Element = ElementGrp[Ele];
             Element.ElementStiffness(Matrix);
-            StiffnessMatrix->Assembly(Matrix, Element.GetLocationMatrix(), Element.GetND());
+            // 使用缩减法装配
+            StiffnessMatrix->AssemblyWithEssentialBC(Matrix, Element.GetLocationMatrix(), Element.GetND(), Force, Element.GetNodes());
         }
-
-		delete[] Matrix;
-		Matrix = nullptr;
-	}
-
+        delete[] Matrix;
+        Matrix = nullptr;
+    }
+    // // 调试输出：装配后Force前10项
+    // std::cout << "[DEBUG] Force after AssemblyWithEssentialBC (first 10): ";
+    // for (int i = 0; i < std::min(10U, NEQ); ++i) std::cout << Force[i] << " ";
+    // std::cout << std::endl;
 #ifdef _DEBUG_
-	COutputter* Output = COutputter::GetInstance();
-	Output->PrintStiffnessMatrix();
+    COutputter* Output = COutputter::GetInstance();
+    Output->PrintStiffnessMatrix();
 #endif
 
 }
@@ -298,7 +299,7 @@ bool CDomain::AssembleForce(unsigned int LoadCase)
 
     clear(Force, NEQ);
 
-//	Loop over for all concentrated loads in load case LoadCase
+//  Loop over for all concentrated loads in load case LoadCase
 	for (unsigned int lnum = 0; lnum < LoadData->nloads; lnum++)
 	{
 		unsigned int dof = NodeList[LoadData->node[lnum] - 1].bcode[LoadData->dof[lnum] - 1];
@@ -306,6 +307,10 @@ bool CDomain::AssembleForce(unsigned int LoadCase)
         if(dof) // The DOF is activated
             Force[dof - 1] += LoadData->load[lnum];
 	}
+    // 调试输出：装配后Force前10项
+    std::cout << "[DEBUG] Force after AssembleForce (first 10): ";
+    for (int i = 0; i < std::min(10U, NEQ); ++i) std::cout << Force[i] << " ";
+    std::cout << std::endl;
 
 	return true;
 }

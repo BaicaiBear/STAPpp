@@ -12,6 +12,7 @@
 
 #include <string>
 #include <climits>
+#include "Node.h"
 
 #ifdef _DEBUG_
 #include "Outputter.h"
@@ -75,6 +76,9 @@ public:
 
 //! Assemble the element stiffness matrix to the global stiffness matrix
     void Assembly(double* Matrix, unsigned int* LocationMatrix, size_t ND);
+
+// 新增：带本质边界条件的装配（缩减法）
+    void AssemblyWithEssentialBC(double* Matrix, unsigned int* LocationMatrix, size_t ND, double* Force, CNode** nodes);
 
 //! Return pointer to the ColumnHeights_
     inline unsigned int* GetColumnHeights();
@@ -262,6 +266,43 @@ void CSkylineMatrix<T_>::Assembly(double* Matrix, unsigned int* LocationMatrix, 
     }
     
     return;
+}
+
+// 新增：带本质边界条件的装配（缩减法）
+template <class T_>
+void CSkylineMatrix<T_>::AssemblyWithEssentialBC(double* Matrix, unsigned int* LocationMatrix, size_t ND, double* Force, CNode** nodes) {
+    for (unsigned int j = 0; j < ND; j++) {
+        unsigned int Lj = LocationMatrix[j];
+        int node_j = j / CNode::NDF;
+        int dof_j = j % CNode::NDF;
+        bool isEssential_j = (nodes[node_j]->bcode[dof_j] == 0);
+        double val_j = nodes[node_j]->bcval[dof_j];
+        unsigned int DiagjElement = (j+1)*j/2;
+        for (unsigned int i = 0; i <= j; i++) {
+            unsigned int Li = LocationMatrix[i];
+            int node_i = i / CNode::NDF;
+            int dof_i = i % CNode::NDF;
+            bool isEssential_i = (nodes[node_i]->bcode[dof_i] == 0);
+            double val_i = nodes[node_i]->bcval[dof_i];
+            double kij = Matrix[DiagjElement + j - i];
+            // 精准调试输出
+            if (isEssential_i && Lj) {
+                if (std::abs(kij) > 1e-12) {
+                    std::cout << "[DEBUG] 修正Force: node_i=" << node_i+1 << ", dof_i=" << dof_i << ", Li=" << Li << ", node_j=" << node_j+1 << ", dof_j=" << dof_j << ", Lj=" << Lj << ", kij=" << kij << ", val_i=" << val_i << std::endl;
+                }
+                Force[Lj-1] -= kij * val_i;
+            }
+            if (isEssential_j && Li) {
+                if (std::abs(kij) > 1e-12) {
+                    std::cout << "[DEBUG] 修正Force: node_j=" << node_j+1 << ", dof_j=" << dof_j << ", Lj=" << Lj << ", node_i=" << node_i+1 << ", dof_i=" << dof_i << ", Li=" << Li << ", kij=" << kij << ", val_j=" << val_j << std::endl;
+                }
+                Force[Li-1] -= kij * val_j;
+            }
+            if (!isEssential_i && !isEssential_j && Li && Lj) {
+                (*this)(Li, Lj) += kij;
+            }
+        }
+    }
 }
 
 //    Calculate address of diagonal elements in banded matrix

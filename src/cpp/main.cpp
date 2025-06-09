@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     for (unsigned int lcase = 0; lcase < FEMData->GetNLCASE(); lcase++)
     {
 //      Assemble righ-hand-side vector (force vector)
-        FEMData->AssembleForce(lcase + 1);
+        // FEMData->AssembleForce(lcase + 1);
             
 //      Reduce right-hand-side force vector and back substitute
         Solver->BackSubstitution(FEMData->GetForce());

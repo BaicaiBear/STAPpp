@@ -35,6 +35,7 @@ public:
 /*!	After call Domain::CalculateEquationNumber(), bcode stores the global equation number */
 /*!	corresponding to each degree of freedom of the node */
 	unsigned int bcode[NDF];
+	double bcval[NDF]; // 每个自由度的本质边界条件值
 
 //!	Constructor
 	CNode(double X = 0, double Y = 0, double Z = 0);
