@@ -169,7 +169,8 @@ void COutputter::OutputElementInfo()
 				OutputC3D8RElements(EleGrp);
 				break;
 			case ElementTypes::S4R: // S4R element
-				*this << " I don't think it is necesasry to output the element info for S4R." << endl << "You can use utils/visualize_s4r_patch.py to visualize the S4R element." << endl << endl;
+				OutputS4RElements(EleGrp);
+				break;
 			case ElementTypes::B31: // B31 element
 				OutputB31Elements(EleGrp);
 				break;
@@ -267,6 +268,47 @@ void COutputter::OutputBarElements(unsigned int EleGrp)
         *this << setw(5) << Ele+1;
 		ElementGroup[Ele].Write(*this);
     }
+
+	*this << endl;
+}
+
+//	Output S4R element data
+void COutputter::OutputS4RElements(unsigned int EleGrp)
+{
+	CDomain* FEMData = CDomain::GetInstance();
+	CElementGroup& ElementGroup = FEMData->GetEleGrpList()[EleGrp];
+	unsigned int NUMMAT = ElementGroup.GetNUMMAT();
+
+	*this << " M A T E R I A L   D E F I N I T I O N" << endl
+		  << endl;
+	*this << " NUMBER OF DIFFERENT SETS OF MATERIAL" << endl;
+	*this << " AND SECTION CONSTANTS  . . . .( NPAR(3) ) . . =" << setw(5) << NUMMAT << endl
+		  << endl;
+
+	*this << "  SET       E           nu         thickness           density" << endl
+		  << " NUMBER     (Pa)                    (m)        		(kg/m3)" << endl;
+
+	*this << setiosflags(ios::scientific) << setprecision(5);
+
+	for (unsigned int mset = 0; mset < NUMMAT; mset++)
+	{
+		*this << setw(5) << mset+1;
+		ElementGroup.GetMaterial(mset).Write(*this);
+	}
+
+	*this << endl << endl
+		  << " E L E M E N T   I N F O R M A T I O N (S4R)" << endl;
+	
+	*this << " ELEMENT     NODE     NODE     NODE     NODE       MATERIAL" << endl
+		  << " NUMBER-N      I        J        K        L       SET NUMBER" << endl;
+
+	unsigned int NUME = ElementGroup.GetNUME();
+
+	for (unsigned int Ele = 0; Ele < NUME; Ele++)
+	{
+		*this << setw(5) << Ele+1;
+		ElementGroup[Ele].Write(*this);
+	}
 
 	*this << endl;
 }

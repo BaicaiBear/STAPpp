@@ -187,7 +187,7 @@ bool CDomain::ReadElements()
 //	Loop over for all element group
 	for (unsigned int EleGrp = 0; EleGrp < NUMEG; EleGrp++)
         if (!EleGrpList[EleGrp].Read(Input))
-            return false;
+            // return false;
     
     return true;
 }

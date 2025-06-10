@@ -14,13 +14,13 @@ public:
     ~CS4R();
 
     // 读取单元数据
-    virtual bool Read(ifstream& Input, CMaterial* MaterialSets, CNode* NodeList) override;
+    virtual bool Read(ifstream& Input, CMaterial* MaterialSets, CNode* NodeList);
     // 输出单元数据
-    virtual void Write(COutputter& output) override;
+    virtual void Write(COutputter& output);
     // 计算单元刚度矩阵（含hourglass控制）
-    virtual void ElementStiffness(double* Matrix) override;
+    virtual void ElementStiffness(double* Matrix);
     // 计算单元应力
-    virtual void ElementStress(double* stress, double* Displacement) override;
+    virtual void ElementStress(double* stress, double* Displacement);
     CNode* GetNode(unsigned int i) const;
 
 private:

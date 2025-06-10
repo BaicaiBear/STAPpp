@@ -62,7 +62,10 @@ void CC3D8RMaterial::Write(COutputter& output)
 bool CB31Material::Read(ifstream& Input)
 {
     Input >> nset;
-    Input >> E >> G >> Area >> Iy >> Iz >> J >> density;
+    double nu;
+    Input >> E >> nu >> density >> Area >> Iy >> Iz >> J ;
+    // 计算剪切模量 G
+    G = E / (2 * (1 + nu)); // 使用泊松比计算剪切模量
     return true;
 }
 
