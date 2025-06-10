@@ -8,13 +8,13 @@ def generate_one_edge_fixed_plate():
     nodes = [
         (1, 0.0, 0.0, 0.0),
         (2, 1.0, 0.0, 0.0),
-        (3, 2.0, 0.0, 0.0),
+        (3, 2.33, 0.0, 0.0),
         (4, 0.0, 1.0, 0.0),
         (5, 0.84, 0.7, 0.0),
         (6, 2.0, 1.1, 0.0),
-        (7, 0.0, 2.0, 0.0),
+        (7, 0.1, 2.11, 0.0),
         (8, 1.0, 2.0, 0.0),
-        (9, 2.0, 2.0, 0.0),
+        (9, 1.9, 2.2, 0.0),
     ]
     # 单元定义（4个非标准四边形）
     elements = [
@@ -24,7 +24,7 @@ def generate_one_edge_fixed_plate():
         (4, 5, 6, 9, 8),
     ]
     # 左边一排节点固定
-    fixed_nodes = {1, 4, 7}
+    fixed_nodes = {1, 4}
     # 文件写入
     with open("./data/plate_1edge_fixed_4elem.dat", "w") as f:
         f.write("Plate Element Test - 4 Elements (1 edge fixed, 4 quad)\n")
