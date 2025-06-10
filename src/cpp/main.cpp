@@ -55,17 +55,14 @@ int main(int argc, char *argv[])
 		cerr << "*** Error *** Data input failed!" << endl;
 		exit(1);
 	}
-    
     double time_input = timer.ElapsedTime();
 
     COutputter* Output = COutputter::GetInstance();
-
     if (!FEMData->GetMODEX())
     {
         *Output << "Data check completed !" << endl << endl;
         return 0;
     }
-
 //  Allocate global vectors and matrices, such as the Force, ColumnHeights,
 //  DiagonalAddress and StiffnessMatrix, and calculate the column heights
 //  and address of diagonal elements

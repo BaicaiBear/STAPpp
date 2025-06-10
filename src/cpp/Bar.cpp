@@ -22,7 +22,7 @@ CBar::CBar()
 	NEN_ = 2;	// Each element has 2 nodes
 	nodes_ = new CNode*[NEN_];
     
-    ND_ = 6;
+    ND_ = 12;
     LocationMatrix_ = new unsigned int[ND_];
 
 	ElementMaterial_ = nullptr;
