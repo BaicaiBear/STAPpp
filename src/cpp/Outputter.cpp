@@ -835,7 +835,12 @@ void COutputter::OutputVTK(const std::string& filename) {
                 for (int k = 0; k < 8; ++k)
                     conn.push_back(elem_nodes[k]->NodeNumber - 1);
                 vtk_type = 12;
-            }
+            } else if (etype == ElementTypes::B31) {
+				// B31: 2节点，VTK_LINE=3
+				conn.push_back(elem_nodes[0]->NodeNumber - 1);
+				conn.push_back(elem_nodes[1]->NodeNumber - 1);
+				vtk_type = 3;
+			} 
             if (!conn.empty()) {
                 cell_info.push_back({vtk_type, conn});
                 total_cells++;
@@ -891,7 +896,12 @@ void COutputter::OutputVTK(const std::string& filename) {
                 EleGrp[e].ElementStress(stress, Displacement);
                 // 取Mx为主（可根据需求改为其它分量）
                 val = stress[0];
-            }
+            } else if (etype == ElementTypes::B31) {
+				double stress[6];
+				EleGrp[e].ElementStress(stress, Displacement);
+				// 取Axial-N为主（可根据需求改为其它分量）
+				val = stress[0];
+			}
             vtkfile << val << "\n";
             cell_idx++;
         }

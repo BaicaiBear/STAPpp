@@ -305,7 +305,7 @@ bool CDomain::AssembleForce(unsigned int LoadCase)
     }
 
     // 2. 单元重力体力
-    const double g = 10.0; // 重力加速度
+    const double g = -10.0; // 重力加速度
     for (unsigned int EleGrp = 0; EleGrp < NUMEG; EleGrp++)
     {
         CElementGroup& ElementGrp = EleGrpList[EleGrp];
@@ -360,7 +360,7 @@ bool CDomain::AssembleForce(unsigned int LoadCase)
                 double L = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)+(z2-z1)*(z2-z1));
                 double fz = density * area * L * g / 2.0;
                 for (int i = 0; i < 2; ++i) {
-                    int loc = LocationMatrix[i*3+2]; // z方向
+                    int loc = LocationMatrix[i*6+2]; // z方向
                     if (loc) Force[loc-1] += fz;
                 }
             } else if (auto* matB31 = dynamic_cast<CB31Material*>(mat)) {

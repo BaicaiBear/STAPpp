@@ -82,27 +82,42 @@ void CBar::ElementStiffness(double* Matrix)
 
 	double k = material_->E * material_->Area / L / L2;
 
-	Matrix[0] = k*DX2[0];
-	Matrix[1] = k*DX2[1];
-	Matrix[2] = k*DX2[3];
-	Matrix[3] = k*DX2[2];
-	Matrix[4] = k*DX2[4];
-	Matrix[5] = k*DX2[5];
-	Matrix[6] = k*DX2[0];
-	Matrix[7] = -k*DX2[5];
-	Matrix[8] = -k*DX2[3];
-	Matrix[9] = -k*DX2[0];
-	Matrix[10] = k*DX2[1];
-	Matrix[11] = k*DX2[3];
-	Matrix[12] = -k*DX2[4];
-	Matrix[13] = -k*DX2[1];
-	Matrix[14] = -k*DX2[3];
-	Matrix[15] = k*DX2[2];
-	Matrix[16] = k*DX2[4];
-	Matrix[17] = k*DX2[5];
-	Matrix[18] = -k*DX2[2];
-	Matrix[19] = -k*DX2[4];
-	Matrix[20] = -k*DX2[5];
+	double matrix[21];
+
+	matrix[0] = k*DX2[0];
+	matrix[1] = k*DX2[1];
+	matrix[2] = k*DX2[3];
+	matrix[3] = k*DX2[2];
+	matrix[4] = k*DX2[4];
+	matrix[5] = k*DX2[5];
+	matrix[6] = k*DX2[0];
+	matrix[7] = -k*DX2[5];
+	matrix[8] = -k*DX2[3];
+	matrix[9] = -k*DX2[0];
+	matrix[10] = k*DX2[1];
+	matrix[11] = k*DX2[3];
+	matrix[12] = -k*DX2[4];
+	matrix[13] = -k*DX2[1];
+	matrix[14] = -k*DX2[3];
+	matrix[15] = k*DX2[2];
+	matrix[16] = k*DX2[4];
+	matrix[17] = k*DX2[5];
+	matrix[18] = -k*DX2[2];
+	matrix[19] = -k*DX2[4];
+	matrix[20] = -k*DX2[5];
+
+	for (int i = 0; i < NEN_; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            int f = i*3+j, realf = 6*i+j;
+            for (int p = i; p >= 0; --p){
+                for (int q = 2; q >= 0; --q) {
+                    int k = p*3+q, realk = 6*p+q;
+                    if (k > f) continue; 
+					Matrix[realf*(realf+1)/2+realf-realk] = matrix[f*(f+1)/2+f-k];
+                }
+            }
+        }
+    }
 }
 
 //	Calculate element stress 
