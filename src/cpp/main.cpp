@@ -12,6 +12,7 @@
 #include "Bar.h"
 #include "Outputter.h"
 #include "Clock.h"
+#include "EigenSolver.h"
 #include <iostream>
 
 using namespace std;
@@ -20,9 +21,12 @@ int main(int argc, char *argv[])
 {
     cout << "**********************************************************" << endl;
     cout << "Program Launch: STAP++" << endl;
-	if (argc != 2) //  Print help message
+	if (argc < 2 || argc > 3) //  Print help message
 	{
-	    cout << "Usage: stap++ InputFileName\n";
+	    cout << "Usage: stap++ InputFileName [SolverType]\n";
+        cout << "SolverType: 0 - Skyline LDLT (Original)\n";
+        cout << "            1 - Eigen Direct Solver (SimplicialLDLT)\n";
+        cout << "            2 - Eigen Iterative Solver (Conjugate Gradient)\n";
 		exit(1);
 	}
 
@@ -45,6 +49,17 @@ int main(int argc, char *argv[])
 	string OutFile = filename + ".out";
 
 	CDomain* FEMData = CDomain::GetInstance();
+
+    // Set solver type if provided
+    if (argc == 3) {
+        unsigned int solverType = atoi(argv[2]);
+        if (solverType > 2) {
+            cout << "*** Warning *** Invalid solver type: " << solverType << endl;
+            cout << "Using default solver type: 0 (Skyline LDLT)" << endl;
+            solverType = 0;
+        }
+        FEMData->SetSolverType(solverType);
+    }
 
     Clock timer;
     timer.Start();
@@ -75,10 +90,36 @@ int main(int argc, char *argv[])
     double time_assemble = timer.ElapsedTime();
 
 //  Solve the linear equilibrium equations for displacements
-	CLDLTSolver* Solver = new CLDLTSolver(FEMData->GetStiffnessMatrix());
+    // Get solver type (0: Skyline LDLT, 1: Eigen Direct, 2: Eigen CG)
+    unsigned int solverType = FEMData->GetSolverType();
     
-//  Perform L*D*L(T) factorization of stiffness matrix
-    Solver->LDLT();
+    // Create the appropriate solver
+    CLDLTSolver* skylineSolver = nullptr;
+    CEigenDirectSolver* eigenDirectSolver = nullptr;
+    CEigenCGSolver* eigenCGSolver = nullptr;
+    
+    cout << "Using solver type: ";
+    switch (solverType) {
+        case 0: // Skyline LDLT
+            cout << "Skyline LDLT (Original)" << endl;
+            skylineSolver = new CLDLTSolver(FEMData->GetStiffnessMatrix());
+            skylineSolver->LDLT(); // Perform L*D*L(T) factorization
+            break;
+        case 1: // Eigen Direct
+            cout << "Eigen Direct Solver (SimplicialLDLT)" << endl;
+            eigenDirectSolver = new CEigenDirectSolver(FEMData->GetEigenStiffnessMatrix());
+            eigenDirectSolver->Factorize(); // Perform factorization
+            break;
+        case 2: // Eigen CG
+            cout << "Eigen Iterative Solver (Conjugate Gradient)" << endl;
+            eigenCGSolver = new CEigenCGSolver(FEMData->GetEigenStiffnessMatrix());
+            break;
+        default:
+            cout << "Skyline LDLT (Default)" << endl;
+            skylineSolver = new CLDLTSolver(FEMData->GetStiffnessMatrix());
+            skylineSolver->LDLT(); // Perform L*D*L(T) factorization
+            break;
+    }
 
 #ifdef _DEBUG_
     Output->PrintStiffnessMatrix();
@@ -91,7 +132,20 @@ int main(int argc, char *argv[])
         FEMData->AssembleForce(lcase + 1);
             
 //      Reduce right-hand-side force vector and back substitute
-        Solver->BackSubstitution(FEMData->GetForce());
+        switch (solverType) {
+            case 0: // Skyline LDLT
+                skylineSolver->BackSubstitution(FEMData->GetForce());
+                break;
+            case 1: // Eigen Direct
+                eigenDirectSolver->Solve(FEMData->GetForce());
+                break;
+            case 2: // Eigen CG
+                eigenCGSolver->Solve(FEMData->GetForce());
+                break;
+            default:
+                skylineSolver->BackSubstitution(FEMData->GetForce());
+                break;
+        }
 
         *Output << " LOAD CASE" << setw(5) << lcase + 1 << endl << endl << endl;
 
@@ -117,6 +171,11 @@ int main(int argc, char *argv[])
 
     // 导出VTK文件，便于ParaView后处理
     Output->OutputVTK(filename + ".vtk");
+
+    // Clean up solvers
+    delete skylineSolver;
+    delete eigenDirectSolver;
+    delete eigenCGSolver;
 
 	return 0;
 }

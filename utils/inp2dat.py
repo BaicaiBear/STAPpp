@@ -514,11 +514,13 @@ def parse_inp_to_dat(inp_filepath, dat_filepath):
             # 找到重复坐标，合并到已存在的节点
             existing_new_node_id = coord_to_node_id[coord_key]
             old_to_new_node_map[old_node_id] = existing_new_node_id
-            
-            # 对bcode做与运算（1表示约束，0表示自由）
-            for dof_idx in range(6):
-                new_global_nodes_coords_bcs[existing_new_node_id]["bcode"][dof_idx] &= bcode[dof_idx]
-                
+            if ((new_global_nodes_coords_bcs[existing_new_node_id]["bcode"] == [0,0,0,0,0,0] and bcode == [0,0,0,1,1,1]) or (new_global_nodes_coords_bcs[existing_new_node_id]["bcode"] == [0,0,0,1,1,1] and bcode == [0,0,0,0,0,0])):
+                new_global_nodes_coords_bcs[existing_new_node_id]["bcode"] = [0,0,0,1,1,1]
+            else:
+                # 对bcode做与运算（1表示约束，0表示自由）
+                for dof_idx in range(6):
+                    new_global_nodes_coords_bcs[existing_new_node_id]["bcode"][dof_idx] &= bcode[dof_idx]
+
         else:
             # 新的坐标，创建新节点
             coord_to_node_id[coord_key] = new_node_id
@@ -765,8 +767,8 @@ def parse_inp_to_dat(inp_filepath, dat_filepath):
 
 
 # --- 主执行块 ---
-inp_file_path = 'data/Question/Bridge-2.inp'  # 你的 INP 文件路径
-dat_file_path = 'data/Question/Bridge-2.dat'  # 输出的 DAT 文件路径
+inp_file_path = 'data/Question/Bridge-1.inp'  # 你的 INP 文件路径
+dat_file_path = 'data/Question/Bridge-1.dat'  # 输出的 DAT 文件路径
 
 # 调用解析函数
 conversion_summary_data = parse_inp_to_dat(inp_file_path, dat_file_path)

@@ -23,6 +23,28 @@ void CLDLTSolver::LDLT()
 	unsigned int N = K.dim();
     unsigned int* ColumnHeights = K.GetColumnHeights();   // Column Hights
 
+	// Check if matrix is symmetric, but only check within the column heights
+	if (N > 0) {  // Make sure matrix is not empty
+		// Check if the first pivot is positive
+		if (fabs(K(1,1)) <= FLT_MIN) {  // Changed from K(0,0) to K(1,1) as matrix is 1-based
+			cerr << "*** Error *** Stiffness matrix is not positive definite!" << endl
+				 << "    Equation no = 1" << endl
+				 << "    Pivot = " << K(1,1) << endl;
+			exit(4);
+		}
+
+		// For sparse matrix, we only need to check elements within the column heights
+		for (unsigned int j = 2; j <= N; j++) {  // Changed to 2 to N, 1-based indexing
+			unsigned int mj = j - ColumnHeights[j-1];
+			for (unsigned int i = mj; i <= j-1; i++) {  // Changed range to match 1-based indexing
+				if (fabs(K(i,j) - K(j,i)) > FLT_EPSILON) {
+					cerr << "*** Error *** Matrix is not symmetric!" << endl;
+					exit(4);
+				}
+			}
+		}
+	}
+
 	for (unsigned int j = 2; j <= N; j++)      // Loop for column 2:n (Numbering starting from 1)
 	{
         // Row number of the first non-zero element in column j (Numbering starting from 1)

@@ -37,6 +37,8 @@ CDomain::CDomain()
 
 	Force = nullptr;
 	StiffnessMatrix = nullptr;
+	EigenStiffnessMatrix = nullptr;
+	SolverType = 0; // Default to Skyline LDLT solver
 }
 
 //	Desconstructor
@@ -51,6 +53,7 @@ CDomain::~CDomain()
 
 	delete [] Force;
 	delete StiffnessMatrix;
+	delete EigenStiffnessMatrix;
 }
 
 //	Return pointer to the instance of the Domain class
@@ -242,6 +245,9 @@ void CDomain::AllocateMatrices()
     //  Create the banded stiffness matrix
     StiffnessMatrix = new CSkylineMatrix<double>(NEQ);
     
+    //  Create the Eigen sparse stiffness matrix
+    EigenStiffnessMatrix = new CEigenMatrix(NEQ);
+    
     //    Calculate column heights
     CalculateColumnHeights();
     
@@ -272,12 +278,18 @@ void CDomain::AssembleStiffnessMatrix()
         {
             CElement& Element = ElementGrp[Ele];
             Element.ElementStiffness(Matrix);
+            
+            // Assemble into both matrices
             StiffnessMatrix->Assembly(Matrix, Element.GetLocationMatrix(), Element.GetND());
+            EigenStiffnessMatrix->Assembly(Matrix, Element.GetLocationMatrix(), Element.GetND());
         }
 
 		delete[] Matrix;
 		Matrix = nullptr;
 	}
+
+    // Finalize the Eigen matrix assembly
+    EigenStiffnessMatrix->Assemble();
 
 #ifdef _DEBUG_
 	COutputter* Output = COutputter::GetInstance();
@@ -397,4 +409,3 @@ bool CDomain::AssembleForce(unsigned int LoadCase)
 
     return true;
 }
-

@@ -16,6 +16,8 @@
 #include "Solver.h"
 #include "LoadCaseData.h"
 #include "SkylineMatrix.h"
+#include "EigenMatrix.h"
+#include "EigenSolver.h"
 
 using namespace std;
 
@@ -71,6 +73,13 @@ private:
 /*! A one-dimensional array storing only the elements below the	skyline of the 
     global stiffness matrix. */
     CSkylineMatrix<double>* StiffnessMatrix;
+
+//! Eigen sparse stiffness matrix
+    CEigenMatrix* EigenStiffnessMatrix;
+
+//! Solver type
+/*! 0: Skyline LDLT, 1: Eigen Direct, 2: Eigen CG */
+    unsigned int SolverType;
 
 //!	Global nodal force/displacement vector
 	double* Force;
@@ -155,5 +164,14 @@ public:
 
 //!	Return pointer to the banded stiffness matrix
 	inline CSkylineMatrix<double>* GetStiffnessMatrix() { return StiffnessMatrix; }
+
+//! Return pointer to the Eigen stiffness matrix
+    inline CEigenMatrix* GetEigenStiffnessMatrix() { return EigenStiffnessMatrix; }
+
+//! Set solver type
+    inline void SetSolverType(unsigned int type) { SolverType = type; }
+
+//! Get solver type
+    inline unsigned int GetSolverType() { return SolverType; }
 
 };
