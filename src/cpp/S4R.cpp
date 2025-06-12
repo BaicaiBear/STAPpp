@@ -118,7 +118,7 @@ void CS4R::ElementStiffness(double* Matrix) {
                             if (k>f) continue; 
                             for (int m = 0; m < 3; ++m) {
                                 for (int n = 0; n < 3; ++n) {
-                                    Matrix[realf*(realf+1)/2+realf-realk] += w * detJ * Bb[m][f] * Db[m][n] * Bb[n][k];
+                                    Matrix[realf*(realf+1)/2+realf-realk] += w * abs(detJ) * Bb[m][f] * Db[m][n] * Bb[n][k];
                                 }
                             }
                         }
@@ -163,7 +163,7 @@ void CS4R::ElementStiffness(double* Matrix) {
                     if (k > f) continue; 
                     for (int m = 0; m < 2; ++m) {
                         for (int n = 0; n < 2; ++n) {
-                            Matrix[realf*(realf+1)/2+realf-realk] += w * detJ * Bs[m][f] * Ds[m][n] * Bs[n][k];
+                            Matrix[realf*(realf+1)/2+realf-realk] += w * abs(detJ) * Bs[m][f] * Ds[m][n] * Bs[n][k];
                         }
                     }
                 }
