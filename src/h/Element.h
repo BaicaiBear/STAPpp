@@ -73,25 +73,6 @@ public:
         unsigned int i = 0;
         for (unsigned int N = 0; N < NEN_; N++)
             for (unsigned int D = 0; D < CNode::NDF; D++){
-                // 调试信息：检查指针和下标
-                if (!nodes_) {
-                    std::cerr << "[Error] nodes_ is nullptr!" << std::endl;
-                }
-                if (N >= NEN_) {
-                    std::cerr << "[Error] N(" << N << ") >= NEN_(" << NEN_ << ")" << std::endl;
-                }
-                if (!nodes_[N]) {
-                    std::cerr << "[Error] nodes_[" << N << "] is nullptr!" << std::endl;
-                }
-                if (D >= CNode::NDF) {
-                    std::cerr << "[Error] D(" << D << ") >= CNode::NDF(" << CNode::NDF << ")" << std::endl;
-                }
-                if (!LocationMatrix_) {
-                    std::cerr << "[Error] LocationMatrix_ is nullptr!" << std::endl;
-                }
-                if (i >= ND_) {
-                    std::cerr << "[Error] i(" << i << ") >= ND_(" << ND_ << ")" << std::endl;
-                }
                 // 实际赋值
                 LocationMatrix_[i++] = nodes_[N]->bcode[D];
             }

@@ -251,7 +251,7 @@ void CC3D8R::ElementStiffness(double* matrix)
     double cbrtV = pow(V, 1.0 / 3.0);
     double l2    = cbrtV * cbrtV;
     // hourglass 强度系数
-    const double hgAlpha = 0.0001;
+    const double hgAlpha = 0.005;
     double gh = mu * V / l2 * hgAlpha;
 
     // 11.5 对每一个 hourglass 模式做累加

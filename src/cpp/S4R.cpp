@@ -170,14 +170,34 @@ void CS4R::ElementStiffness(double* Matrix) {
             }
         }
     }
-    // // 9. hourglass控制（基于Flanagan-Belytschko方法，简化实现）
-    // // hourglass 模式矢量
-    // double hg[4] = {1, -1, 1, -1};
-    // double alpha = 0.05; // hourglass 抑制系数（可调）
-    // for(int i=0;i<4;++i) {
-    //     for(int j=0;j<4;++j) {
-    //         // 只对z方向（板厚方向）自由度加hourglass抑制
-    //         Matrix[(i*3+2)*12 + (j*3+2)] += alpha * E * t * hg[i] * hg[j] * detJ;
+    // // 7. hourglass控制（可选）
+    // // 7. hourglass控制（仿照剪切刚度组装方式）
+    // double H[4][12] = {
+    //     {1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0},
+    //     {0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1},
+    //     {-1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1},
+    //     {1, 1, 1, 1, -1, -1, -1, -1, 0, 0, 0, 0}
+    // }; // 示例 hourglass 模态，实际可根据需要改进
+
+    // double alpha = 0.5; // 沙漏刚度调节参数（可调）
+
+    // for (int a = 0; a < 4; ++a) {
+    //     for (int i = 0; i < NEN_; ++i) {
+    //         for (int j = 0; j < 3; ++j) {
+    //             int f = i * 3 + j;
+    //             int realf = 6 * i + j + 2; // 与膜/剪切一致，从DOF 2开始（UZ, RX, RY）
+
+    //             for (int p = i; p >= 0; --p) {
+    //                 for (int q = 2; q >= 0; --q) {
+    //                     int k = p * 3 + q;
+    //                     int realk = 6 * p + q + 2;
+    //                     if (k > f) continue;
+
+    //                     double val = alpha * t * H[a][f] * H[a][k];
+    //                     Matrix[realf * (realf + 1) / 2 + realk] += val;
+    //                 }
+    //             }
+    //         }
     //     }
     // }
 }
