@@ -409,7 +409,7 @@ def parse_inp_to_dat(inp_filepath, dat_filepath):
                     final_coords_iter = tx_coords_iter
 
                 # 初始化bcode为全部自由
-                global_nodes_coords_bcs[next_global_node_id] = {"coords": final_coords_iter, "bcode": [1,1,1,1,1,1]}
+                global_nodes_coords_bcs[next_global_node_id] = {"coords": final_coords_iter, "bcode": [0,0,0,0,0,0]}
                 next_global_node_id += 1
 
         # 此实例的全局单元
@@ -483,7 +483,7 @@ def parse_inp_to_dat(inp_filepath, dat_filepath):
                     if gn_id in global_nodes_coords_bcs:
                         # 对每个DOF做与运算（0表示自由，1表示约束）
                         for dof_idx in range(6):
-                            global_nodes_coords_bcs[gn_id]["bcode"][dof_idx] &= element_dof_constraint[dof_idx]
+                            global_nodes_coords_bcs[gn_id]["bcode"][dof_idx] |= element_dof_constraint[dof_idx]
 
             global_elements_data.append({
                 "id": next_global_element_id,
@@ -514,12 +514,10 @@ def parse_inp_to_dat(inp_filepath, dat_filepath):
             # 找到重复坐标，合并到已存在的节点
             existing_new_node_id = coord_to_node_id[coord_key]
             old_to_new_node_map[old_node_id] = existing_new_node_id
-            if ((new_global_nodes_coords_bcs[existing_new_node_id]["bcode"] == [0,0,0,0,0,0] and bcode == [0,0,0,1,1,1]) or (new_global_nodes_coords_bcs[existing_new_node_id]["bcode"] == [0,0,0,1,1,1] and bcode == [0,0,0,0,0,0])):
-                new_global_nodes_coords_bcs[existing_new_node_id]["bcode"] = [0,0,0,1,1,1]
-            else:
-                # 对bcode做与运算（1表示约束，0表示自由）
-                for dof_idx in range(6):
-                    new_global_nodes_coords_bcs[existing_new_node_id]["bcode"][dof_idx] &= bcode[dof_idx]
+        
+            # 对bcode做与运算（1表示约束，0表示自由）
+            for dof_idx in range(6):
+                new_global_nodes_coords_bcs[existing_new_node_id]["bcode"][dof_idx] |= bcode[dof_idx]
 
         else:
             # 新的坐标，创建新节点
