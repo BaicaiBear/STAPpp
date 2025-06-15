@@ -100,3 +100,16 @@ public:
     virtual bool Read(ifstream& Input);
     virtual void Write(COutputter& output);
 };
+
+// Q4 单元材料类定义
+class CQ4Material : public CMaterial
+{
+public:
+    double nu;           // 泊松比
+    double thickness;    // 厚度
+    double density;      // 材料密度
+    bool PlaneStress;    // 是否为平面应力状态
+
+    virtual bool Read(ifstream& Input) override;
+    virtual void Write(COutputter& output) override;
+};
