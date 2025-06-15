@@ -85,3 +85,25 @@ void CB31Material::Write(COutputter& output)
     output << setw(16) << E << setw(16) << G << setw(16) << Area
            << setw(16) << Iy << setw(16) << Iz << setw(16) << J << setw(16) << density << endl;
 }
+
+// Q4 单元材料类实现
+bool CQ4Material::Read(ifstream& Input)
+{
+    Input >> nset;
+    Input >> E >> nu >> density >> thickness;
+    
+    int stress_type;
+    Input >> stress_type;
+    PlaneStress = (stress_type == 1);
+
+    return true;
+}
+
+void CQ4Material::Write(COutputter& output)
+{
+    output << setw(16) << E 
+           << setw(16) << nu 
+           << setw(16) << density 
+           << setw(16) << thickness 
+           << setw(16) << (PlaneStress ? 1 : 0) << endl;
+}
